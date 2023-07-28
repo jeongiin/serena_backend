@@ -20,7 +20,6 @@ app.include_router(music.music_api)
 app.include_router(images.images_api)
 
 
-
 @app.get("/")
 async def root():
     return {"message": "SKY FLY AI Melovision Internal API Service"}
