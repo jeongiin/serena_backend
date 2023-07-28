@@ -24,28 +24,28 @@ class Diary(BaseModel):
 # 다이어리 작성
 @diaries_api.post("/")
 async def create_diary(item: Diary):
-    return HTTPException(status_code=501, detail="Not implemented (create_diary)")
+    raise HTTPException(status_code=501, detail="Not implemented (create_diary)")
 
 
 # 전체 다이어리 조회
 @diaries_api.get("/{user_id}")
 async def get_diaries(user_id: UUID4):
-    return HTTPException(status_code=501, detail="Not implemented (get_diaries)")
+    raise HTTPException(status_code=501, detail="Not implemented (get_diaries)")
 
 
 # 특정 다이어리 조회
 @diaries_api.get("/{user_id}/{diary_id}")
 async def get_diary(user_id: UUID4, diary_id: UUID4):
-    return HTTPException(status_code=501, detail="Not implemented (get_diary)")
+    raise HTTPException(status_code=501, detail="Not implemented (get_diary)")
 
 
 # 다이어리 수정
 @diaries_api.put("/{user_id}/{diary_id}")
 async def update_diary(user_id: UUID4, diary_id: UUID4, item: Diary):
-    return HTTPException(status_code=501, detail="Not implemented (update_diary)")
+    raise HTTPException(status_code=501, detail="Not implemented (update_diary)")
 
 
 # 다이어리 삭제
 @diaries_api.delete("/{user_id}/{diary_id}")
 async def delete_diary(user_id: UUID4, diary_id: UUID4):
-    return HTTPException(status_code=501, detail="Not implemented (delete_diary)")
+    raise HTTPException(status_code=501, detail="Not implemented (delete_diary)")

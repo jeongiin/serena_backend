@@ -24,22 +24,22 @@ class Chat(BaseModel):
 # 채팅 작성
 @chats_api.post("/")
 async def create_chat(item: Chat):
-    return HTTPException(status_code=501, detail="Not implemented (create_chat)")
+    raise HTTPException(status_code=501, detail="Not implemented (create_chat)")
 
 
 # 전체 채팅 조회
 @chats_api.get("/{user_id}")
 async def get_chats(user_id: UUID4):
-    return HTTPException(status_code=501, detail="Not implemented (get_chats)")
+    raise HTTPException(status_code=501, detail="Not implemented (get_chats)")
 
 
 # 특정 채팅 조회
 @chats_api.get("/{user_id}/{chat_id}")
 async def get_chat(user_id: UUID4, chat_id: UUID4):
-    return HTTPException(status_code=501, detail="Not implemented (get_chat)")
+    raise HTTPException(status_code=501, detail="Not implemented (get_chat)")
 
 
 # 채팅 삭제
 @chats_api.delete("/{user_id}/{chat_id}")
 async def delete_chat(user_id: UUID4, chat_id: UUID4):
-    return HTTPException(status_code=501, detail="Not implemented (delete_chat)")
+    raise HTTPException(status_code=501, detail="Not implemented (delete_chat)")
