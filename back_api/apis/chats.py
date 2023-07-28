@@ -36,9 +36,3 @@ async def get_diaries(user_id: UUID4):
 @chats_api.get("/{user_id}/{chat_id}")
 async def get_diary(user_id: UUID4, chat_id: UUID4):
     return HTTPException(status_code=501, detail="Not implemented (get_diary)")
-
-
-# 채팅 수정
-@chats_api.put("/{user_id}/{chat_id}")
-async def update_diary(user_id: UUID4, chat_id: UUID4, item: Chat):
-    return HTTPException(status_code=501, detail="Not implemented (update_diary)")
