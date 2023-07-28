@@ -22,7 +22,7 @@ app.include_router(images.images_api)
 
 @app.get("/")
 async def root():
-    return {"message": "SKY FLY AI Melovision Internal API Service"}
+    return {"message": "SKT FLY AI Melovision Internal API Service"}
 
 
 if __name__ == '__main__':
