@@ -13,6 +13,12 @@ class Letter(BaseModel):
     title: str
     content: str
 
+# {
+#     "user_id": "550e8400-e29b-41d4-a716-446655440000",
+#     "title": "제목",
+#     "content": "내용"
+# }
+
 
 # 편지 작성
 @letters_api.post("/")
