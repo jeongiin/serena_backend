@@ -16,5 +16,5 @@ class Chat(BaseModel):
 
 
 @chats_api.post("/")
-async def create_diary():
+async def create_diary(item: Chat):
     return HTTPException(status_code=501, detail="Not implemented")
