@@ -10,7 +10,8 @@ except ImportError:
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-app = FastAPI(title="SKY FLY AI Melovision Internal API Service")
+app = FastAPI(title="SKY FLY AI Melovision Internal API Service",
+              redoc_url=None)
 app.include_router(diaries.diaries_api)
 app.include_router(letters.letters_api)
 app.include_router(chats.chats_api)
