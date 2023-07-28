@@ -42,3 +42,9 @@ async def get_diary(user_id: UUID4, diary_id: UUID4):
 @diaries_api.put("/{user_id}/{diary_id}")
 async def update_diary(user_id: UUID4, diary_id: UUID4, item: Diary):
     return HTTPException(status_code=501, detail="Not implemented (update_diary)")
+
+
+# 다이어리 삭제
+@diaries_api.delete("/{user_id}/{diary_id}")
+async def delete_diary(user_id: UUID4, diary_id: UUID4):
+    return HTTPException(status_code=501, detail="Not implemented (delete_diary)")
