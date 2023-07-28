@@ -1,8 +1,8 @@
 import warnings
-from pydantic import BaseModel
 from uuid import UUID
 
 from fastapi import HTTPException, APIRouter
+from pydantic import BaseModel
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
