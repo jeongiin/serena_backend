@@ -17,4 +17,4 @@ class Diary(BaseModel):
 
 @diaries_api.post("/")
 async def create_diary():
-    pass
+    return HTTPException(status_code=501, detail="Not implemented")
