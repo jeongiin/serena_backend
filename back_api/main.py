@@ -10,7 +10,7 @@ except ImportError:
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-app = FastAPI()
+app = FastAPI(title="SKY FLY AI Melovision Internal API Service")
 app.include_router(diaries.diaries_api)
 app.include_router(letters.letters_api)
 app.include_router(chats.chats_api)
@@ -22,4 +22,4 @@ async def root():
 
 
 if __name__ == '__main__':
-    uvicorn.run("main:app", host='localhost', port=8000, reload=False)
+    uvicorn.run("main:app", host='localhost', port=8000, reload=True)
