@@ -24,7 +24,7 @@ class Diary(BaseModel):
 # 다이어리 작성
 @diaries_api.post("/")
 async def create_diary(item: Diary):
-    return HTTPException(status_code=501, detail="Not implemented (create_diary))")
+    return HTTPException(status_code=501, detail="Not implemented (create_diary)")
 
 
 # 전체 다이어리 조회
