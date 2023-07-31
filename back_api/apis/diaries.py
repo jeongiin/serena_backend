@@ -27,28 +27,25 @@ async def create_diary(item: Diary):
     return JSONResponse(status_code=201, content={"diary_id": str(diary_id)})
 
 
-# 전체 다이어리 조회
+# 전체, 개별 다이어리 조회
 @diaries_api.get("/")
-async def get_diaries(user_id: str, baby_id: str):
-    diaries = MeloDB.melo_diaries.find({"user_id": user_id, "baby_id": baby_id})
-    diaries = object_id_to_str(diaries)
-    if not diaries:
-        raise HTTPException(status_code=404, detail="Not found")
+async def get_diaries(user_id: str, baby_id: str, diary_id: str = None):
+    if diary_id:
+        diary_id = str_to_object_id(diary_id)
+        diary = MeloDB.melo_diaries.find_one({"_id": diary_id, "user_id": user_id, "baby_id": baby_id})
+        if not diary:
+            raise HTTPException(status_code=404, detail="Not found")
 
-    return JSONResponse(status_code=200, content=diaries)
+        diary['_id'] = str(diary['_id'])
 
+        return JSONResponse(status_code=200, content=diary)
+    else:
+        diaries = MeloDB.melo_diaries.find({"user_id": user_id, "baby_id": baby_id})
+        diaries = object_id_to_str(diaries)
+        if not diaries:
+            raise HTTPException(status_code=404, detail="Not found")
 
-# 특정 다이어리 조회
-@diaries_api.get("/")
-async def get_diary(user_id: str, baby_id: str, diary_id: str):
-    diary_id = str_to_object_id(diary_id)
-    diary = MeloDB.melo_diaries.find_one({"_id": diary_id, "user_id": user_id, "baby_id": baby_id})
-    if not diary:
-        raise HTTPException(status_code=404, detail="Not found")
-
-    diary['_id'] = str(diary['_id'])
-
-    return JSONResponse(status_code=200, content=diary)
+        return JSONResponse(status_code=200, content=diaries)
 
 
 # 다이어리 수정
