@@ -21,6 +21,7 @@ class ContentType(str, Enum):
 
 class AlbumArt(BaseModel):
     user_id: str
+    baby_id: str
     content_type: ContentType
     content_id: str
 
@@ -35,7 +36,7 @@ async def create_generated_albumart_image(item: AlbumArt):
     }
 
     content_id = str_to_object_id(item.content_id)
-    content = content_type_map[item.content_type].find_one({"_id": content_id, "user_id": item.user_id})
+    content = content_type_map[item.content_type].find_one({"_id": content_id, "user_id": item.user_id, "baby_id": item.baby_id})
     if not content:
         raise HTTPException(status_code=404, detail="Not found")
 
@@ -52,9 +53,9 @@ async def create_generated_albumart_image(item: AlbumArt):
 
 # 생성 앨범아트 이미지 가져오기
 @images_api.get("/albumart/{user_id}/{image_id}")
-async def get_generated_albumart_image(user_id: str, image_id: str):
+async def get_generated_albumart_image(user_id: str, baby_id: str, image_id: str):
     image_id = str_to_object_id(image_id)
-    image = MeloDB.melo_images.find_one({"_id": image_id, "user_id": user_id})
+    image = MeloDB.melo_images.find_one({"_id": image_id, "user_id": user_id, "baby_id": baby_id})
     if not image:
         raise HTTPException(status_code=404, detail="Not found")
 
@@ -66,13 +67,13 @@ async def get_generated_albumart_image(user_id: str, image_id: str):
 
 # 생성 앨범아트 이미지 제거
 @images_api.delete("/albumart/{user_id}/{image_id}")
-async def delete_generated_albumart_image(user_id: str, image_id: str):
+async def delete_generated_albumart_image(user_id: str, baby_id: str, image_id: str):
     image_id = str_to_object_id(image_id)
-    image = MeloDB.melo_images.find_one({"_id": image_id, "user_id": user_id})
+    image = MeloDB.melo_images.find_one({"_id": image_id, "user_id": user_id, "baby_id": baby_id})
     if not image:
         raise HTTPException(status_code=404, detail="Not found")
 
-    MeloDB.melo_images.delete_one({"_id": image_id, "user_id": user_id})
+    MeloDB.melo_images.delete_one({"_id": image_id, "user_id": user_id, "baby_id": baby_id})
 
     return JSONResponse(status_code=200, content={"image_id": str(image_id)})
     # raise HTTPException(status_code=501, detail="Not implemented (delete_generated_albumart_image)")

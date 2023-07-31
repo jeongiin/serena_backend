@@ -13,6 +13,7 @@ letters_api = APIRouter(prefix='/letters', tags=['letters'])
 
 class Letter(BaseModel):
     user_id: str
+    baby_id: str
     title: str
     content: str
 

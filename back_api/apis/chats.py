@@ -13,6 +13,7 @@ chats_api = APIRouter(prefix='/chats', tags=['chats'])
 
 class Chat(BaseModel):
     user_id: str
+    baby_id: str
     title: str
     content: str
 
