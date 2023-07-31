@@ -51,7 +51,7 @@ async def create_generated_music(item: Music):
     raise HTTPException(status_code=501, detail="Not implemented (create_generated_music)")
 
 # 생성 음악 가져오기
-@music_api.get("/{user_id}/{music_id}")
+@music_api.get("/")
 async def get_generated_music(user_id: str, baby_id: str, music_id: str):
     music_id = str_to_object_id(music_id)
     music = MeloDB.melo_music.find_one({"_id": music_id, "user_id": user_id, "baby_id": baby_id})
@@ -65,7 +65,7 @@ async def get_generated_music(user_id: str, baby_id: str, music_id: str):
 
 
 # 생성 음악 제거
-@music_api.delete("/{user_id}/{music_id}")
+@music_api.delete("/")
 async def delete_generated_music(user_id: str, baby_id: str, music_id: str):
     music_id = str_to_object_id(music_id)
     music = MeloDB.melo_music.find_one({"_id": music_id, "user_id": user_id, "baby_id": baby_id})

@@ -41,7 +41,7 @@ async def create_user(item: User):
 
 
 # 회원 정보 조회
-@common_api.get("/users/{user_id}")
+@common_api.get("/users")
 async def get_user(user_id: str):
     user_id = str_to_object_id(user_id)
     user = MeloDB.melo_users.find_one({"_id": user_id})
@@ -54,7 +54,7 @@ async def get_user(user_id: str):
 
 
 # 회원 정보 수정
-@common_api.put("/users/{user_id}")
+@common_api.put("/users")
 async def update_user(user_id: str, item: User):
     user_id = str_to_object_id(user_id)
     user = MeloDB.melo_users.find_one({"_id": user_id})
@@ -67,7 +67,7 @@ async def update_user(user_id: str, item: User):
 
 
 # 회원 정보 삭제
-@common_api.delete("/users/{user_id}")
+@common_api.delete("/users")
 async def delete_user(user_id: str):
     user_id = str_to_object_id(user_id)
     user = MeloDB.melo_users.find_one({"_id": user_id})
@@ -80,7 +80,7 @@ async def delete_user(user_id: str):
 
 
 # 새 아기 정보 작성
-@common_api.post("/babies/{user_id}")
+@common_api.post("/babies")
 async def create_baby(user_id: str, item: Baby):
     user_id = str_to_object_id(user_id)
     user = MeloDB.melo_users.find_one({"_id": user_id})
@@ -95,7 +95,7 @@ async def create_baby(user_id: str, item: Baby):
 
 
 # 전체 아기 정보 조회
-@common_api.get("/babies/{user_id}")
+@common_api.get("/babies")
 async def get_babies(user_id: str):
     babies = MeloDB.melo_babies.find({"user_id": user_id})
     babies = object_id_to_str(babies)
@@ -104,7 +104,7 @@ async def get_babies(user_id: str):
 
 
 # 단일 아기 정보 조회
-@common_api.get("/babies/{user_id}/{baby_id}")
+@common_api.get("/babies")
 async def get_baby(user_id: str, baby_id: str):
     baby_id = str_to_object_id(baby_id)
     baby = MeloDB.melo_babies.find_one({"_id": baby_id, "user_id": user_id})
@@ -117,7 +117,7 @@ async def get_baby(user_id: str, baby_id: str):
 
 
 # 아기 정보 수정
-@common_api.put("/babies/{user_id}/{baby_id}")
+@common_api.put("/babies")
 async def update_baby(user_id: str, baby_id: str, item: Baby):
     baby_id = str_to_object_id(baby_id)
     baby = MeloDB.melo_babies.find_one({"_id": baby_id, "user_id": user_id})
@@ -130,7 +130,7 @@ async def update_baby(user_id: str, baby_id: str, item: Baby):
 
 
 # 아기 정보 삭제
-@common_api.delete("/babies/{user_id}/{baby_id}")
+@common_api.delete("/babies")
 async def delete_baby(user_id: str, baby_id: str):
     baby_id = str_to_object_id(baby_id)
     baby = MeloDB.melo_babies.find_one({"_id": baby_id, "user_id": user_id})

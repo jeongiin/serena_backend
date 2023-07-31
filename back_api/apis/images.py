@@ -52,7 +52,7 @@ async def create_generated_albumart_image(item: AlbumArt):
 
 
 # 생성 앨범아트 이미지 가져오기
-@images_api.get("/albumart/{user_id}/{image_id}")
+@images_api.get("/albumart")
 async def get_generated_albumart_image(user_id: str, baby_id: str, image_id: str):
     image_id = str_to_object_id(image_id)
     image = MeloDB.melo_images.find_one({"_id": image_id, "user_id": user_id, "baby_id": baby_id})
@@ -66,7 +66,7 @@ async def get_generated_albumart_image(user_id: str, baby_id: str, image_id: str
 
 
 # 생성 앨범아트 이미지 제거
-@images_api.delete("/albumart/{user_id}/{image_id}")
+@images_api.delete("/albumart")
 async def delete_generated_albumart_image(user_id: str, baby_id: str, image_id: str):
     image_id = str_to_object_id(image_id)
     image = MeloDB.melo_images.find_one({"_id": image_id, "user_id": user_id, "baby_id": baby_id})

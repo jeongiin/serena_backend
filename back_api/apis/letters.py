@@ -26,19 +26,19 @@ async def create_letter(item: Letter):
 
 
 # 전체 편지 조회
-@letters_api.get("/{user_id}")
+@letters_api.get("/")
 async def get_letters(user_id: str):
     raise HTTPException(status_code=501, detail="Not implemented (get_letters)")
 
 
 # 특정 편지 조회
-@letters_api.get("/{user_id}/{letter_id}")
+@letters_api.get("/")
 async def get_letter(user_id: str, letter_id: str):
     raise HTTPException(status_code=501, detail="Not implemented (get_letter)")
 
 
 # 편지 수정
-@letters_api.put("/{user_id}/{letter_id}")
+@letters_api.put("/")
 async def update_letter(user_id: str, letter_id: str, item: Letter):
     raise HTTPException(status_code=501, detail="Not implemented (update_letter)")
 

@@ -28,7 +28,7 @@ async def create_diary(item: Diary):
 
 
 # 전체 다이어리 조회
-@diaries_api.get("/{user_id}")
+@diaries_api.get("/")
 async def get_diaries(user_id: str, baby_id: str):
     diaries = MeloDB.melo_diaries.find({"user_id": user_id, "baby_id": baby_id})
     diaries = object_id_to_str(diaries)
@@ -39,8 +39,8 @@ async def get_diaries(user_id: str, baby_id: str):
 
 
 # 특정 다이어리 조회
-@diaries_api.get("/{user_id}/{diary_id}")
-async def get_diary(user_id: str, diary_id: str, baby_id: str):
+@diaries_api.get("/")
+async def get_diary(user_id: str, baby_id: str, diary_id: str):
     diary_id = str_to_object_id(diary_id)
     diary = MeloDB.melo_diaries.find_one({"_id": diary_id, "user_id": user_id, "baby_id": baby_id})
     if not diary:
@@ -52,8 +52,8 @@ async def get_diary(user_id: str, diary_id: str, baby_id: str):
 
 
 # 다이어리 수정
-@diaries_api.put("/{user_id}/{diary_id}")
-async def update_diary(user_id: str, diary_id: str, item: Diary):
+@diaries_api.put("/")
+async def update_diary(user_id: str, baby_id: str, diary_id: str, item: Diary):
     diary_id = str_to_object_id(diary_id)
     diary = MeloDB.melo_diaries.find_one({"_id": diary_id, "user_id": user_id, "baby_id": item.baby_id})
     if not diary:
@@ -65,8 +65,8 @@ async def update_diary(user_id: str, diary_id: str, item: Diary):
 
 
 # 다이어리 삭제
-@diaries_api.delete("/{user_id}/{diary_id}")
-async def delete_diary(user_id: str, diary_id: str, baby_id: str):
+@diaries_api.delete("/")
+async def delete_diary(user_id: str, baby_id: str, diary_id: str):
     diary_id = str_to_object_id(diary_id)
     diary = MeloDB.melo_diaries.find_one({"_id": diary_id, "user_id": user_id, "baby_id": baby_id})
     if not diary:
