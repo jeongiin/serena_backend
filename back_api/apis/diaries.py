@@ -18,13 +18,6 @@ class Diary(BaseModel):
     content: str
 
 
-# {
-#     "user_id": ObjectId(),
-#     "title": "제목",
-#     "content": "내용"
-# }
-
-
 # 다이어리 작성
 @diaries_api.post("/")
 async def create_diary(item: Diary):
