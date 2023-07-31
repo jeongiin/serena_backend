@@ -22,6 +22,10 @@ class Diary(BaseModel):
 # 다이어리 작성
 @diaries_api.post("/")
 async def create_diary(item: Diary):
+    user = MeloDB.melo_users.find_one({"_id": str_to_object_id(item.user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="Not found")
+
     diary_id = MeloDB.melo_diaries.insert_one(item.model_dump(mode='json')).inserted_id
 
     return JSONResponse(status_code=201, content={"diary_id": str(diary_id)})

@@ -22,6 +22,10 @@ class Chat(BaseModel):
 # 채팅 작성
 @chats_api.post("/")
 async def create_chat(item: Chat):
+    user = MeloDB.melo_users.find_one({"_id": str_to_object_id(item.user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="Not found")
+
     chat_id = MeloDB.melo_chats.insert_one(item.model_dump(mode='json')).inserted_id
 
     return JSONResponse(status_code=201, content={"chat_id": str(chat_id)})

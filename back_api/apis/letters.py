@@ -22,6 +22,10 @@ class Letter(BaseModel):
 # 편지 작성
 @letters_api.post("/")
 async def create_letter(item: Letter):
+    user = MeloDB.melo_users.find_one({"_id": str_to_object_id(item.user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="Not found")
+
     letter_id = MeloDB.melo_letters.insert_one(item.model_dump(mode='json')).inserted_id
 
     return JSONResponse(status_code=201, content={"letter_id": str(letter_id)})
