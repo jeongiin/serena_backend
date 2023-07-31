@@ -6,7 +6,7 @@ from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import MeloDB
+from . import MeloDB, object_id_to_str, str_to_object_id
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -25,23 +25,6 @@ class Diary(BaseModel):
 #     "title": "제목",
 #     "content": "내용"
 # }
-
-
-def object_id_to_str(documents):
-    result = []
-    for document in documents:
-        document['_id'] = str(document['_id'])
-        result.append(document)
-
-    return result
-
-
-def str_to_object_id(string):
-    try:
-        return ObjectId(string)
-    except InvalidId:
-        raise HTTPException(status_code=400, detail=f"Invalid ObjectId ({string})")
-    # TODO: string 반환 안하게 바꾸기
 
 
 # 다이어리 작성
