@@ -9,13 +9,13 @@ diaries_api = APIRouter(prefix='/diaries', tags=['diaries'])
 
 
 class Diary(BaseModel):
-    user_id: UUID4
+    user_UUID: UUID4
     title: str
     content: str
 
 
 # {
-#     "user_id": "550e8400-e29b-41d4-a716-446655440000",
+#     "user_UUID": "550e8400-e29b-41d4-a716-446655440000",
 #     "title": "제목",
 #     "content": "내용"
 # }
@@ -28,24 +28,24 @@ async def create_diary(item: Diary):
 
 
 # 전체 다이어리 조회
-@diaries_api.get("/{user_id}")
-async def get_diaries(user_id: UUID4):
+@diaries_api.get("/{user_UUID}")
+async def get_diaries(user_UUID: UUID4):
     raise HTTPException(status_code=501, detail="Not implemented (get_diaries)")
 
 
 # 특정 다이어리 조회
-@diaries_api.get("/{user_id}/{diary_id}")
-async def get_diary(user_id: UUID4, diary_id: UUID4):
+@diaries_api.get("/{user_UUID}/{diary_id}")
+async def get_diary(user_UUID: UUID4, diary_id: UUID4):
     raise HTTPException(status_code=501, detail="Not implemented (get_diary)")
 
 
 # 다이어리 수정
-@diaries_api.put("/{user_id}/{diary_id}")
-async def update_diary(user_id: UUID4, diary_id: UUID4, item: Diary):
+@diaries_api.put("/{user_UUID}/{diary_id}")
+async def update_diary(user_UUID: UUID4, diary_id: UUID4, item: Diary):
     raise HTTPException(status_code=501, detail="Not implemented (update_diary)")
 
 
 # 다이어리 삭제
-@diaries_api.delete("/{user_id}/{diary_id}")
-async def delete_diary(user_id: UUID4, diary_id: UUID4):
+@diaries_api.delete("/{user_UUID}/{diary_id}")
+async def delete_diary(user_UUID: UUID4, diary_id: UUID4):
     raise HTTPException(status_code=501, detail="Not implemented (delete_diary)")
