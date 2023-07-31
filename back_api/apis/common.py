@@ -136,4 +136,4 @@ async def delete_baby(user_id: str, baby_id: str):
 
     MeloDB.melo_babies.delete_one({"_id": baby_id, "user_id": user_id})
 
-    raise HTTPException(status_code=501, detail="Not implemented (delete_baby)")
+    return JSONResponse(status_code=200, content={"baby_id": str(baby_id)})
