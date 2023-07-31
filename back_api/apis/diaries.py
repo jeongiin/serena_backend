@@ -1,7 +1,5 @@
 import warnings
 
-from bson.errors import InvalidId
-from bson.objectid import ObjectId
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
