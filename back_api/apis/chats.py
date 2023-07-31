@@ -41,7 +41,3 @@ async def get_chat(user_id: str, baby_id: str, chat_id: str):
 @chats_api.delete("/")
 async def delete_chat(user_id: str, baby_id: str, chat_id: str):
     raise HTTPException(status_code=501, detail="Not implemented (delete_chat)")
-
-
-if __name__ == '__main__':
-    pass
