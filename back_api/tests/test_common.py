@@ -1,3 +1,6 @@
+from . import *
+
+
 # 새 회원 정보 작성 테스트
 # @pytest.mark.anyio
 # @pytest.mark.parametrize("name, email, phone, address, description, result",
