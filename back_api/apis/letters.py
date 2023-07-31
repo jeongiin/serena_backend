@@ -3,8 +3,11 @@ import warnings
 from fastapi import HTTPException, APIRouter
 from pydantic import BaseModel
 
+from . import MeloDB
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+MeloDB = MeloDB()
 letters_api = APIRouter(prefix='/letters', tags=['letters'])
 
 

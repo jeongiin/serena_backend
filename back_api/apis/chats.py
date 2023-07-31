@@ -3,8 +3,11 @@ import warnings
 from fastapi import HTTPException, APIRouter
 from pydantic import BaseModel
 
+from . import MeloDB
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+MeloDB = MeloDB()
 chats_api = APIRouter(prefix='/chats', tags=['chats'])
 
 
@@ -43,3 +46,7 @@ async def get_chat(user_id: str, chat_id: str):
 @chats_api.delete("/{user_id}/{chat_id}")
 async def delete_chat(user_id: str, chat_id: str):
     raise HTTPException(status_code=501, detail="Not implemented (delete_chat)")
+
+
+if __name__ == '__main__':
+    pass

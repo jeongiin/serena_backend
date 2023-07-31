@@ -3,8 +3,11 @@ import warnings
 from fastapi import HTTPException, APIRouter
 from pydantic import BaseModel
 
+from . import MeloDB
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+MeloDB = MeloDB()
 images_api = APIRouter(prefix='/images', tags=['images'])
 
 
