@@ -94,26 +94,23 @@ async def create_baby(user_id: str, item: Baby):
     return JSONResponse(status_code=201, content={"baby_id": str(baby_id)})
 
 
-# 전체 아기 정보 조회
+# 전체, 개별 아기 정보 조회
 @common_api.get("/babies")
-async def get_babies(user_id: str):
-    babies = MeloDB.melo_babies.find({"user_id": user_id})
-    babies = object_id_to_str(babies)
+async def get_babies(user_id: str, baby_id: str = None):
+    if baby_id:
+        baby_id = str_to_object_id(baby_id)
+        baby = MeloDB.melo_babies.find_one({"_id": baby_id, "user_id": user_id})
+        if not baby:
+            raise HTTPException(status_code=404, detail="Not found")
 
-    return JSONResponse(status_code=200, content=babies)
+        baby['_id'] = str(baby['_id'])
 
+        return JSONResponse(status_code=200, content=baby)
+    else:
+        babies = MeloDB.melo_babies.find({"user_id": user_id})
+        babies = object_id_to_str(babies)
 
-# 단일 아기 정보 조회
-@common_api.get("/babies")
-async def get_baby(user_id: str, baby_id: str):
-    baby_id = str_to_object_id(baby_id)
-    baby = MeloDB.melo_babies.find_one({"_id": baby_id, "user_id": user_id})
-    if not baby:
-        raise HTTPException(status_code=404, detail="Not found")
-
-    baby['_id'] = str(baby['_id'])
-
-    return JSONResponse(status_code=200, content=baby)
+        return JSONResponse(status_code=200, content=babies)
 
 
 # 아기 정보 수정
