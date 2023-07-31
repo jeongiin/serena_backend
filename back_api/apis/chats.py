@@ -27,19 +27,19 @@ async def create_chat(item: Chat):
 
 # 전체 채팅 조회
 @chats_api.get("/")
-async def get_chats(user_id: str):
+async def get_chats(user_id: str, baby_id: str):
     raise HTTPException(status_code=501, detail="Not implemented (get_chats)")
 
 
 # 특정 채팅 조회
 @chats_api.get("/")
-async def get_chat(user_id: str, chat_id: str):
+async def get_chat(user_id: str, baby_id: str, chat_id: str):
     raise HTTPException(status_code=501, detail="Not implemented (get_chat)")
 
 
 # 채팅 삭제
 @chats_api.delete("/")
-async def delete_chat(user_id: str, chat_id: str):
+async def delete_chat(user_id: str, baby_id: str, chat_id: str):
     raise HTTPException(status_code=501, detail="Not implemented (delete_chat)")
 
 

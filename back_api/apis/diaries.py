@@ -53,13 +53,13 @@ async def get_diary(user_id: str, baby_id: str, diary_id: str):
 
 # 다이어리 수정
 @diaries_api.put("/")
-async def update_diary(user_id: str, baby_id: str, diary_id: str, item: Diary):
+async def update_diary(diary_id: str, item: Diary):
     diary_id = str_to_object_id(diary_id)
-    diary = MeloDB.melo_diaries.find_one({"_id": diary_id, "user_id": user_id, "baby_id": item.baby_id})
+    diary = MeloDB.melo_diaries.find_one({"_id": diary_id, "user_id": item.user_id, "baby_id": item.baby_id})
     if not diary:
         raise HTTPException(status_code=404, detail="Not found")
 
-    MeloDB.melo_diaries.update_one({"_id": diary_id, "user_id": user_id, "baby_id": item.baby_id}, {"$set": item.model_dump(mode='json')})
+    MeloDB.melo_diaries.update_one({"_id": diary_id, "user_id": item.user_id, "baby_id": item.baby_id}, {"$set": item.model_dump(mode='json')})
 
     return JSONResponse(status_code=200, content={"diary_id": str(diary_id)})
 
