@@ -1,10 +1,16 @@
 import warnings
 
+from bson.errors import InvalidId
+from bson.objectid import ObjectId
 from fastapi import HTTPException, APIRouter
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
+from . import MeloDB
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
+MeloDB = MeloDB()
 diaries_api = APIRouter(prefix='/diaries', tags=['diaries'])
 
 
@@ -15,37 +21,82 @@ class Diary(BaseModel):
 
 
 # {
-#     "user_id": "550e8400-e29b-41d4-a716-446655440000",
+#     "user_id": ObjectId(),
 #     "title": "제목",
 #     "content": "내용"
 # }
 
 
+def object_id_to_str(documents):
+    result = []
+    for document in documents:
+        document['_id'] = str(document['_id'])
+        result.append(document)
+
+    return result
+
+
+def str_to_object_id(string):
+    try:
+        return ObjectId(string)
+    except InvalidId:
+        raise HTTPException(status_code=400, detail=f"Invalid ObjectId ({string})")
+    # TODO: string 반환 안하게 바꾸기
+
+
 # 다이어리 작성
 @diaries_api.post("/")
 async def create_diary(item: Diary):
-    raise HTTPException(status_code=501, detail="Not implemented (create_diary)")
+    diary_id = MeloDB.melo_diaries.insert_one(item.model_dump(mode='json')).inserted_id
+
+    return JSONResponse(status_code=201, content={"diary_id": str(diary_id)})
 
 
 # 전체 다이어리 조회
 @diaries_api.get("/{user_id}")
 async def get_diaries(user_id: str):
-    raise HTTPException(status_code=501, detail="Not implemented (get_diaries)")
+    diaries = MeloDB.melo_diaries.find({"user_id": user_id})
+    diaries = object_id_to_str(diaries)
+    if not diaries:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    return JSONResponse(status_code=200, content=diaries)
 
 
 # 특정 다이어리 조회
 @diaries_api.get("/{user_id}/{diary_id}")
 async def get_diary(user_id: str, diary_id: str):
-    raise HTTPException(status_code=501, detail="Not implemented (get_diary)")
+    diary_id = str_to_object_id(diary_id)
+    diary = MeloDB.melo_diaries.find_one({"_id": diary_id, "user_id": user_id})
+    if not diary:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    diary['_id'] = str(diary['_id'])
+
+    return JSONResponse(status_code=200, content=diary)
 
 
 # 다이어리 수정
 @diaries_api.put("/{user_id}/{diary_id}")
 async def update_diary(user_id: str, diary_id: str, item: Diary):
-    raise HTTPException(status_code=501, detail="Not implemented (update_diary)")
+    diary_id = str_to_object_id(diary_id)
+    diary = MeloDB.melo_diaries.find_one({"_id": diary_id, "user_id": user_id})
+    if not diary:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    MeloDB.melo_diaries.update_one({"_id": diary_id, "user_id": user_id}, {"$set": item.model_dump(mode='json')})
+
+    return JSONResponse(status_code=200, content={"diary_id": str(diary_id)})
 
 
 # 다이어리 삭제
 @diaries_api.delete("/{user_id}/{diary_id}")
 async def delete_diary(user_id: str, diary_id: str):
-    raise HTTPException(status_code=501, detail="Not implemented (delete_diary)")
+    diary_id = str_to_object_id(diary_id)
+    diary = MeloDB.melo_diaries.find_one({"_id": diary_id, "user_id": user_id})
+    if not diary:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    MeloDB.melo_diaries.delete_one({"_id": diary_id, "user_id": user_id})
+
+    return JSONResponse(status_code=200, content={"diary_id": str(diary_id)})
