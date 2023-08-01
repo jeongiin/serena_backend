@@ -20,9 +20,9 @@ class Sex(str, Enum):
 
 class User(BaseModel):
     name: str
-    email: str = None
-    phone: str = None
-    address: str = None
+    email: str
+    phone: str
+    address: str
     description: str = None
 
 
