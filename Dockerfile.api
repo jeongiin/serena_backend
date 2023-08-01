@@ -1,0 +1,11 @@
+FROM alpine
+LABEL maintainer="mintflavor"
+COPY ./back_api/ /api/
+WORKDIR /api/
+RUN apk update && \
+    apk add --no-cache python3 py3-pip py3-requests && \
+    pip3 install --no-cache-dir -r requirements.txt
+
+EXPOSE 8000
+
+CMD ["python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0"]
