@@ -7,6 +7,7 @@ from pymongo import MongoClient
 class MeloDB:
     def __init__(self):
         client = MongoClient('mongodb://root:root@localhost', 27017)
+        # TODO: localhost -> mongo
         self.melo_db = client['melovision']
         self.melo_users = self.melo_db['users']
         self.melo_babies = self.melo_db['babies']
