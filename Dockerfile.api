@@ -6,6 +6,6 @@ RUN apk update && \
     apk add --no-cache python3 py3-pip py3-requests && \
     pip3 install --no-cache-dir -r requirements.txt
 
-EXPOSE 8000
+EXPOSE 34567
 
-CMD ["python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0"]
+CMD ["python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "34567"]
