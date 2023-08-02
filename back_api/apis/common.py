@@ -27,6 +27,7 @@ class User(BaseModel):
 
 
 class Baby(BaseModel):
+    user_id: str
     name: str
     sex: Sex
     birth: str
@@ -81,8 +82,8 @@ async def delete_user(user_id: str):
 
 # 새 아기 정보 작성
 @common_api.post("/babies")
-async def create_baby(user_id: str, item: Baby):
-    user_id = str_to_object_id(user_id)
+async def create_baby(item: Baby):
+    user_id = str_to_object_id(item.user_id)
     user = MeloDB.melo_users.find_one({"_id": user_id})
     if not user:
         raise HTTPException(status_code=404, detail="Not found")
@@ -115,7 +116,8 @@ async def get_babies(user_id: str, baby_id: str = None):
 
 # 아기 정보 수정
 @common_api.put("/babies")
-async def update_baby(user_id: str, baby_id: str, item: Baby):
+async def update_baby(baby_id: str, item: Baby):
+    user_id = str_to_object_id(item.user_id)
     baby_id = str_to_object_id(baby_id)
     baby = MeloDB.melo_babies.find_one({"_id": baby_id, "user_id": user_id})
     if not baby:
