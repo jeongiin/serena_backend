@@ -12,7 +12,7 @@ services:
         ports:
             - "27017:27017"
         volumes:
-            - ./data:/data/db
+            - ./mongodata:/data/db
         networks:
             - my_network
 
