@@ -30,7 +30,7 @@ services:
 
     api:
         build:
-            context: ../Melovision
+            context: ./
             dockerfile: Dockerfile.api
         restart: always
         ports:
