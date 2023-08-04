@@ -1,11 +1,13 @@
 # SKT FLY AI Melovision Backend System
 
-## 1. FastAPI
+## 1. API Server
+
+### 1.1. FastAPI
 
 - port: 34567
 - Docs url: http://localhost:34567/docs
 
-## 2. DB
+### 1.2. DB
 
 - MongoDB
 - port: 45678
@@ -19,12 +21,13 @@
     + images
     + music
 
-## 3. MongoDB Express
+### 1.3. MongoDB Express
 
 - port: 56789
 
-## 4. Run
+### 1.4. Run
 
 ```bash
+$ cd api_server
 $ docker-compose up -d --build
 ```
