@@ -54,10 +54,10 @@ class ImageGenerateQuery(BaseModel):
     baby_id: str
     # content_type: ContentType
     # content_id: str
-    genre: str
-    instrument: str
-    speed: str
-    duration: str
+    genre: Genre
+    instrument: Instrument
+    speed: Speed
+    duration: Duration
 
 
 class MusicGenerateQuery(BaseModel):
@@ -65,10 +65,10 @@ class MusicGenerateQuery(BaseModel):
     baby_id: str
     # content_type: ContentType
     # content_id: str
-    genre: str
-    instrument: str
-    speed: str
-    duration: str
+    genre: Genre
+    instrument: Instrument
+    speed: Speed
+    duration: Duration
 
 
 # 생성 앨범아트 이미지 생성하기
