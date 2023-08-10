@@ -19,16 +19,61 @@ class ContentType(str, Enum):
     chat = 'chat'
 
 
-class ModelQuery(BaseModel):
+class Genre(str, Enum):
+    classic = 'classic'
+    jazz = 'jazz'
+    pop = 'pop'
+    rock = 'rock'
+    hiphop = 'hiphop'
+
+
+class Instrument(str, Enum):
+    piano = 'piano'
+    guitar = 'guitar'
+    drum = 'drum'
+    organ = 'organ'
+    clarinet = 'clarinet'
+
+
+class Speed(str, Enum):
+    slow = 'slow'
+    medium = 'medium'
+    fast = 'fast'
+
+
+class Duration(str, Enum):
+    ten_seconds = '10s'
+    thirty_seconds = '30s'
+    one_minute = '1m'
+    one_minute_thirty_seconds = '1m30s'
+    two_minutes = '2m'
+
+
+class ImageGenerateQuery(BaseModel):
     user_id: str
     baby_id: str
     content_type: ContentType
     content_id: str
+    genre: str
+    instrument: str
+    speed: str
+    duration: str
+
+
+class MusicGenerateQuery(BaseModel):
+    user_id: str
+    baby_id: str
+    content_type: ContentType
+    content_id: str
+    genre: str
+    instrument: str
+    speed: str
+    duration: str
 
 
 # 생성 앨범아트 이미지 생성하기
 @models_api.post("/images")
-async def create_generated_albumart_image(item: ModelQuery):
+async def create_generated_albumart_image(item: ImageGenerateQuery):
     content_type_map = {
         ContentType.diary: MeloDB.melo_diaries,
         ContentType.letter: MeloDB.melo_letters,
@@ -79,7 +124,7 @@ async def delete_generated_albumart_image(user_id: str, baby_id: str, image_id: 
 
 # 생성 음악 생성하기
 @models_api.post("/music")
-async def create_generated_music(item: ModelQuery):
+async def create_generated_music(item: MusicGenerateQuery):
     content_type_map = {
         ContentType.diary: MeloDB.melo_diaries,
         ContentType.letter: MeloDB.melo_letters,
