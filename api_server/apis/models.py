@@ -13,12 +13,6 @@ MeloDB = MeloDB()
 models_api = APIRouter(prefix='/models', tags=['models'])
 
 
-# class ContentType(str, Enum):
-#     diary = 'diary'
-#     letter = 'letter'
-#     chat = 'chat'
-
-
 class Genre(str, Enum):
     classic = 'classic'
     jazz = 'jazz'
@@ -62,9 +56,6 @@ class ImageGenerateQuery(BaseModel):
 
 class MusicGenerateQuery(BaseModel):
     user_id: str
-    # baby_id: str
-    # content_type: ContentType
-    # content_id: str
     genre: Genre
     instrument: Instrument
     speed: Speed
@@ -125,19 +116,8 @@ async def delete_generated_albumart_image(user_id: str, baby_id: str, image_id: 
 # 생성 음악 생성하기
 @models_api.post("/music")
 async def create_generated_music(item: MusicGenerateQuery):
-    # content_type_map = {
-    #     ContentType.diary: MeloDB.melo_diaries,
-    #     ContentType.letter: MeloDB.melo_letters,
-    #     ContentType.chat: MeloDB.melo_chats,
-    # }
-    #
-    # content_id = str_to_object_id(item.content_id)
-    # content = content_type_map[item.content_type].find_one({"_id": content_id, "user_id": item.user_id, "baby_id": item.baby_id})
-    # if not content:
-    #     raise HTTPException(status_code=404, detail="Not found")
-
     user_id = str_to_object_id(item.user_id)
-    user = MeloDB.melo_users.find_one({"_id": user_id})
+    user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
     if not user:
         raise HTTPException(status_code=404, detail="User Not found")
 
@@ -147,11 +127,12 @@ async def create_generated_music(item: MusicGenerateQuery):
 
     item = item.model_dump(mode='json')
 
-    music_id = MeloDB.melo_music.insert_one(item).inserted_id
+    music_id = MeloDB.melo_music.insert_one(item.copy()).inserted_id
+    item['music_id'] = str(music_id)
 
-    return JSONResponse(status_code=202, content={"music_id": str(music_id)})
-
-    # raise HTTPException(status_code=501, detail="Not implemented (create_generated_music)")
+    return FileResponse('/api/music_outputs/test2.wav', filename='test2.wav', headers=item)
+    # return FileResponse(f'/api/music_outputs/{item["music_id"]}.wav', filename=f'{item["music_id"]}.wav', headers=item)
+    # return JSONResponse(status_code=200, content={"music_id": str(music_id)})
 
 
 # 생성 음악 가져오기
@@ -162,7 +143,7 @@ async def get_generated_music(user_id: str, music_id: str):
     if not music:
         raise HTTPException(status_code=404, detail="Music Not found")
 
-    return FileResponse('/api/music_outputs/test.wav', filename='test.wav', headers=music)
+    return FileResponse('/api/music_outputs/test1.wav', filename='test1.wav', headers=music)
 
 
 # 생성 음악 제거
