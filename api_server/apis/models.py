@@ -136,15 +136,26 @@ async def create_generated_music(item: MusicGenerateQuery):
     # if not content:
     #     raise HTTPException(status_code=404, detail="Not found")
 
+    user = MeloDB.melo_users.find_one({"_id": str_to_object_id(item.user_id)})
+    if not user:
+        raise HTTPException(status_code=404, detail="User Not found")
+
+    baby = MeloDB.melo_babies.find_one({"_id": str_to_object_id(item.baby_id)})
+    if not baby:
+        raise HTTPException(status_code=404, detail="Baby Not found")
+
     # -------------------------------------------
     # # TODO: 모델에 음악 생성 요청하는 코드 작성
     # -------------------------------------------
 
-    # music_id = MeloDB.melo_musics.insert_one(item.model_dump(mode='json')).inserted_id
-    #
-    # return JSONResponse(status_code=201, content={"music_id": str(music_id)})
+    item = item.model_dump(mode='json')
+    item['music_url'] = None
 
-    raise HTTPException(status_code=501, detail="Not implemented (create_generated_music)")
+    music_id = MeloDB.melo_music.insert_one(item).inserted_id
+
+    return JSONResponse(status_code=202, content={"music_id": str(music_id)})
+
+    # raise HTTPException(status_code=501, detail="Not implemented (create_generated_music)")
 
 
 # 생성 음악 가져오기
