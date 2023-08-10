@@ -23,7 +23,7 @@ class User(BaseModel):
     email: str
     phone: str
     address: str
-    description: str = None
+    desc: str = None
 
 
 class Baby(BaseModel):
@@ -31,6 +31,8 @@ class Baby(BaseModel):
     name: str
     sex: Sex
     birth: str
+    weeks: int
+    desc: str = None
 
 
 # 새 회원 정보 작성

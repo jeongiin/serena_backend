@@ -9,7 +9,7 @@ user = {
     'email': 'asdasd@asd.com',
     'phone': '010-1234-5678',
     'address': '서울시 어딘가',
-    'description': 'Hi There'
+    'desc': 'Hi There'
 }
 test_user_id = MeloDB.melo_users.insert_one(user).inserted_id
 
@@ -31,16 +31,16 @@ test_baby2_id = MeloDB.melo_babies.insert_one(baby2).inserted_id
 
 # 새 회원 정보 작성 테스트
 # @pytest.mark.anyio
-# @pytest.mark.parametrize("name, email, phone, address, description, result",
+# @pytest.mark.parametrize("name, email, phone, address, desc, result",
 #                          [('김나박이', 'sad@masd.com', '010-1234-5678', '서울시 어딘가', 'Hi There', 201)])
-# async def test_create_user(name, email, phone, address, description, result):
+# async def test_create_user(name, email, phone, address, desc, result):
 #     async with AsyncClient(app=app, base_url="http://localhost") as ac:
 #         request_body = {
 #             "name": name,
 #             "email": email,
 #             "phone": phone,
 #             "address": address,
-#             "description": description
+#             "desc": desc
 #         }
 #         response = await ac.post("/common/users", json=request_body)
 #
@@ -61,16 +61,16 @@ async def test_get_user(user_id, result):
 
 # 회원 정보 수정 테스트
 @pytest.mark.anyio
-@pytest.mark.parametrize("user_id, name, email, phone, address, description, result",
+@pytest.mark.parametrize("user_id, name, email, phone, address, desc, result",
                          [(test_user_id, '수정된 이름', '수정된 이메일', '수정된 번호', '수정된 주소', '수정된 설명', 200)])
-async def test_update_user(user_id, name, email, phone, address, description, result):
+async def test_update_user(user_id, name, email, phone, address, desc, result):
     async with AsyncClient(app=app, base_url="http://localhost") as ac:
         request_body = {
             "name": name,
             "email": email,
             "phone": phone,
             "address": address,
-            "description": description
+            "desc": desc
         }
         params = {"user_id": user_id}
         response = await ac.put(f"/common/users", json=request_body, params=params)
