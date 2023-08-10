@@ -62,6 +62,13 @@ class MusicGenerateQuery(BaseModel):
     duration: Duration
 
 
+class MusicSaveQuery(BaseModel):
+    user_id: str
+    music_id: str
+    title: str
+    desc: str = None
+
+
 # 생성 앨범아트 이미지 생성하기
 @models_api.post("/images")
 async def create_generated_albumart_image(item: ImageGenerateQuery):
@@ -133,6 +140,29 @@ async def create_generated_music(item: MusicGenerateQuery):
     return FileResponse('/api/music_outputs/test2.wav', filename='test2.wav', headers=item)
     # return FileResponse(f'/api/music_outputs/{item["music_id"]}.wav', filename=f'{item["music_id"]}.wav', headers=item)
     # return JSONResponse(status_code=200, content={"music_id": str(music_id)})
+
+
+# 생성 음악 저장하기
+@models_api.post("/music/save")
+async def save_generated_music(item: MusicSaveQuery):
+    user_id = str_to_object_id(item.user_id)
+    music_id = str_to_object_id(item.music_id)
+    user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
+    if not user:
+        raise HTTPException(status_code=404, detail="User Not found")
+
+    music_info = MeloDB.melo_music.find_one({"_id": music_id})
+
+    item = item.model_dump(mode='json')
+    item['genre'] = music_info.genre
+    item['instrument'] = music_info.instrument
+    item['speed'] = music_info.speed
+    item['duration'] = music_info.duration
+    del item['music_id']
+
+    MeloDB.melo_music.update_one({"_id": music_id}, {"$set": item})
+
+    return JSONResponse(status_code=200, content={"music_id": str(music_id)})
 
 
 # 생성 음악 가져오기
