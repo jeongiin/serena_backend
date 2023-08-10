@@ -2,10 +2,10 @@ import warnings
 from enum import Enum
 
 from fastapi import HTTPException, APIRouter
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 
-from . import MeloDB, str_to_object_id, object_id_to_str
+from . import MeloDB, str_to_object_id
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -62,7 +62,7 @@ class ImageGenerateQuery(BaseModel):
 
 class MusicGenerateQuery(BaseModel):
     user_id: str
-    baby_id: str
+    # baby_id: str
     # content_type: ContentType
     # content_id: str
     genre: Genre
@@ -136,20 +136,16 @@ async def create_generated_music(item: MusicGenerateQuery):
     # if not content:
     #     raise HTTPException(status_code=404, detail="Not found")
 
-    user = MeloDB.melo_users.find_one({"_id": str_to_object_id(item.user_id)})
+    user_id = str_to_object_id(item.user_id)
+    user = MeloDB.melo_users.find_one({"_id": user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User Not found")
-
-    baby = MeloDB.melo_babies.find_one({"_id": str_to_object_id(item.baby_id)})
-    if not baby:
-        raise HTTPException(status_code=404, detail="Baby Not found")
 
     # -------------------------------------------
     # # TODO: 모델에 음악 생성 요청하는 코드 작성
     # -------------------------------------------
 
     item = item.model_dump(mode='json')
-    item['music_url'] = None
 
     music_id = MeloDB.melo_music.insert_one(item).inserted_id
 
@@ -160,20 +156,18 @@ async def create_generated_music(item: MusicGenerateQuery):
 
 # 생성 음악 가져오기
 @models_api.get("/music")
-async def get_generated_music(user_id: str, baby_id: str, music_id: str):
+async def get_generated_music(user_id: str, music_id: str):
     music_id = str_to_object_id(music_id)
-    music = MeloDB.melo_music.find_one({"_id": music_id, "user_id": user_id, "baby_id": baby_id})
+    music = MeloDB.melo_music.find_one({"_id": music_id, "user_id": user_id}, {'_id': False})
     if not music:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail="Music Not found")
 
-    music['id'] = str(music['_id'])
-
-    return JSONResponse(status_code=200, content=music)
+    return FileResponse('/api/music_outputs/test.wav', filename='test.wav', headers=music)
 
 
 # 생성 음악 제거
 @models_api.delete("/music")
-async def delete_generated_music(user_id: str, baby_id: str, music_id: str):
+async def delete_generated_music(user_id: str, music_id: str):
     music_id = str_to_object_id(music_id)
     music = MeloDB.melo_music.find_one({"_id": music_id, "user_id": user_id, "baby_id": baby_id})
     if not music:
