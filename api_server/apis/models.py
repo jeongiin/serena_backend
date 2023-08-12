@@ -145,13 +145,10 @@ async def create_generated_music(item: MusicGenerateQuery):
 # 생성 음악 저장하기
 @models_api.post("/music/save")
 async def save_generated_music(item: MusicSaveQuery):
-    user_id = str_to_object_id(item.user_id)
     music_id = str_to_object_id(item.music_id)
-    user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
-    if not user:
-        raise HTTPException(status_code=404, detail="User Not found")
-
     music_info = MeloDB.melo_music.find_one({"_id": music_id})
+    if not music_info:
+        raise HTTPException(status_code=404, detail="Music Not found")
 
     item = item.model_dump(mode='json')
     item['genre'] = music_info.genre
