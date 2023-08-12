@@ -5,7 +5,7 @@ from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 
-from . import MeloDB, str_to_object_id
+from . import MeloDB, str_to_object_id, object_id_to_str
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -165,7 +165,37 @@ async def save_generated_music(item: MusicSaveQuery):
     return JSONResponse(status_code=200, content={"music_id": str(music_id)})
 
 
-# 생성 음악 가져오기
+# 생성 음악 정보 가져오기
+@models_api.get("/music/info")
+async def get_generated_music_info(user_id: str = None, music_id: str = None):
+    if user_id:
+        user_id = str_to_object_id(user_id)
+        user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
+        if not user:
+            raise HTTPException(status_code=404, detail="User Not found")
+
+        music = MeloDB.melo_music.find({"user_id": user_id}, {'_id': False})
+
+        return JSONResponse(status_code=200, content=music)
+
+    elif music_id:
+        music_id = str_to_object_id(music_id)
+        music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
+        if not music:
+            raise HTTPException(status_code=404, detail="Music Not found")
+
+        return FileResponse('/api/music_outputs/test1.wav', filename='test1.wav', headers=music)
+
+    else:
+        music = MeloDB.melo_music.find({})
+        music = object_id_to_str(music)
+        for i in range(len(music)):
+            music[i]['music_id'] = music[i].pop('_id')
+
+        return JSONResponse(status_code=200, content=music)
+
+
+# 생성 음악 파일 가져오기
 @models_api.get("/music")
 async def get_generated_music(user_id: str, music_id: str):
     user_id = str_to_object_id(user_id)
