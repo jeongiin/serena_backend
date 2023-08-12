@@ -168,7 +168,7 @@ async def save_generated_music(item: MusicSaveQuery):
 # 생성 음악 정보 가져오기
 @models_api.get("/music/info")
 async def get_generated_music_info(user_id: str = None, music_id: str = None):
-    if user_id:
+    if user_id: # 특정 유저가 생성한 모든 음악 정보 가져오기
         user_id = str_to_object_id(user_id)
         user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
         if not user:
@@ -181,7 +181,7 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
 
         return JSONResponse(status_code=200, content=music)
 
-    elif music_id:
+    elif music_id: # 특정 음악 정보 가져오기
         music_id = str_to_object_id(music_id)
         music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
         if not music:
@@ -189,7 +189,7 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
 
         return JSONResponse(status_code=200, content=music)
 
-    else:
+    else: # 모든 음악 정보 가져오기
         music = MeloDB.melo_music.find({})
         music = object_id_to_str(music)
         for i in range(len(music)):
