@@ -174,7 +174,10 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
         if not user:
             raise HTTPException(status_code=404, detail="User Not found")
 
-        music = MeloDB.melo_music.find({"user_id": user_id}, {'_id': False})
+        music = MeloDB.melo_music.find({"user_id": user_id})
+        music = object_id_to_str(music)
+        for i in range(len(music)):
+            music[i]['music_id'] = music[i].pop('_id')
 
         return JSONResponse(status_code=200, content=music)
 
@@ -184,7 +187,7 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
         if not music:
             raise HTTPException(status_code=404, detail="Music Not found")
 
-        return FileResponse('/api/music_outputs/test1.wav', filename='test1.wav', headers=music)
+        return JSONResponse(status_code=200, content=music)
 
     else:
         music = MeloDB.melo_music.find({})
