@@ -200,13 +200,8 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
 
 # 생성 음악 파일 가져오기
 @models_api.get("/music")
-async def get_generated_music(user_id: str, music_id: str):
-    user_id = str_to_object_id(user_id)
+async def get_generated_music(music_id: str):
     music_id = str_to_object_id(music_id)
-    user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
-    if not user:
-        raise HTTPException(status_code=404, detail="User Not found")
-
     music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
     if not music:
         raise HTTPException(status_code=404, detail="Music Not found")
@@ -216,13 +211,8 @@ async def get_generated_music(user_id: str, music_id: str):
 
 # 생성 음악 제거
 @models_api.delete("/music")
-async def delete_generated_music(user_id: str, music_id: str):
-    user_id = str_to_object_id(user_id)
+async def delete_generated_music(music_id: str):
     music_id = str_to_object_id(music_id)
-    user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
-    if not user:
-        raise HTTPException(status_code=404, detail="User Not found")
-
     music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
     if not music:
         raise HTTPException(status_code=404, detail="Not found")
