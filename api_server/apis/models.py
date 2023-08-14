@@ -1,6 +1,8 @@
+음import
+os
 import warnings
 
-from fastapi import HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter, File, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 
@@ -11,12 +13,16 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 MeloDB = MeloDB()
 models_api = APIRouter(prefix='/models', tags=['models'])
 
+music_outputs_path = os.path.join('/api', 'music_outputs')
+music_thumbnails_path = os.path.join('/api', 'music_thumbnails')
+
+os.makedirs(music_outputs_path, exist_ok=True)
+os.makedirs(music_thumbnails_path, exist_ok=True)
+
 
 class ImageGenerateQuery(BaseModel):
     user_id: str
     baby_id: str
-    # content_type: ContentType
-    # content_id: str
     genre: Genre
     instrument: Instrument
     speed: Speed
@@ -29,12 +35,6 @@ class MusicGenerateQuery(BaseModel):
     instrument: Instrument
     speed: Speed
     duration: Duration
-
-
-class MusicSaveQuery(BaseModel):
-    music_id: str
-    title: str
-    desc: str = None
 
 
 # 생성 앨범아트 이미지 생성하기
@@ -105,25 +105,38 @@ async def create_generated_music(item: MusicGenerateQuery):
     music_id = MeloDB.melo_music.insert_one(item.copy()).inserted_id
     item['music_id'] = str(music_id)
 
-    return FileResponse('/api/music_outputs/test2.wav', filename='test2.wav', headers=item)
-    # return FileResponse(f'/api/music_outputs/{item["music_id"]}.wav', filename=f'{item["music_id"]}.wav', headers=item)
-    # return JSONResponse(status_code=200, content={"music_id": str(music_id)})
+    return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=item)
+    # return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=item)
 
 
 # 생성 음악 저장하기
 @models_api.post("/music/save")
-async def save_generated_music(item: MusicSaveQuery):
-    music_id = str_to_object_id(item.music_id)
+async def save_generated_music(image_file: UploadFile, music_id: str = Form(...), title: str = Form(...), desc: str = Form(...)):
+    music_id = str_to_object_id(music_id)
     music_info = MeloDB.melo_music.find_one({"_id": music_id})
     if not music_info:
         raise HTTPException(status_code=404, detail="Music Not found")
 
-    item = item.model_dump(mode='json')
-    item['genre'] = music_info['genre']
-    item['instrument'] = music_info['instrument']
-    item['speed'] = music_info['speed']
-    item['duration'] = music_info['duration']
-    del item['music_id']
+    image_file_extension = image_file.filename.split('.')[-1].lower()
+    if image_file_extension not in ['jpg', 'jpeg', 'png', 'heic']:
+        raise HTTPException(status_code=400, detail="Invalid image file extension")
+
+    try:
+        with open(os.path.join(music_thumbnails_path, f'{str(music_id)}.{image_file_extension}'), 'wb') as f:
+            f.write(await image_file.read())
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Upload failed")
+
+    item = dict({
+        "user_id": music_info['user_id'],
+        "title": title,
+        "desc": desc,
+        "genre": music_info['genre'],
+        "instrument": music_info['instrument'],
+        "speed": music_info['speed'],
+        "duration": music_info['duration'],
+    })
 
     MeloDB.melo_music.update_one({"_id": music_id}, {"$set": item})
 
@@ -171,8 +184,12 @@ async def get_generated_music(music_id: str):
     if not music:
         raise HTTPException(status_code=404, detail="Music Not found")
 
-    return FileResponse('/api/music_outputs/test1.wav', filename='test1.wav', headers=music)
-    # return FileResponse(f'/api/music_outputs/{str(music_id)}.wav', filename=f'{str(music_id)}.wav', headers=music)
+    # 헤더에 한글 전송 불가
+    if 'title' in music.keys():
+        del music['title'], music['desc']
+
+    return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=music)
+    # return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=music)
 
 
 # 생성 음악 제거
@@ -184,5 +201,6 @@ async def delete_generated_music(music_id: str):
         raise HTTPException(status_code=404, detail="Not found")
 
     MeloDB.melo_music.delete_one({"_id": music_id})
+    os.remove(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
 
     return JSONResponse(status_code=200, content={"music_id": str(music_id)})

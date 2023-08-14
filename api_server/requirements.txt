@@ -5,3 +5,4 @@ trio
 pytest
 pymongo
 pydantic
+python-multipart
