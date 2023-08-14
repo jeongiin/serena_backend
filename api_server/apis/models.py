@@ -1,8 +1,8 @@
-음import
-os
+import os
 import warnings
+from PIL import Image
 
-from fastapi import HTTPException, APIRouter, File, UploadFile, Form
+from fastapi import HTTPException, APIRouter, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 
@@ -122,10 +122,12 @@ async def save_generated_music(image_file: UploadFile, music_id: str = Form(...)
         raise HTTPException(status_code=400, detail="Invalid image file extension")
 
     try:
-        with open(os.path.join(music_thumbnails_path, f'{str(music_id)}.{image_file_extension}'), 'wb') as f:
-            f.write(await image_file.read())
+        image = Image.open(image_file.file)
+        image = image.convert('RGB')
+        image.save(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'))
 
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail="Upload failed")
 
     item = dict({
