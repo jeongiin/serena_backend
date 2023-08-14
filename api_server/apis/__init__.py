@@ -1,3 +1,5 @@
+from enum import Enum
+
 from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import HTTPException
@@ -16,6 +18,41 @@ class MeloDB:
         self.melo_chats = self.melo_db['chats']
         self.melo_images = self.melo_db['images']
         self.melo_music = self.melo_db['music']
+
+
+class Sex(str, Enum):
+    male = 'male'
+    female = 'female'
+
+
+class Genre(str, Enum):
+    classic = 'classic'
+    jazz = 'jazz'
+    pop = 'pop'
+    rock = 'rock'
+    hiphop = 'hiphop'
+
+
+class Instrument(str, Enum):
+    piano = 'piano'
+    guitar = 'guitar'
+    drum = 'drum'
+    organ = 'organ'
+    clarinet = 'clarinet'
+
+
+class Speed(str, Enum):
+    slow = 'slow'
+    medium = 'medium'
+    fast = 'fast'
+
+
+class Duration(str, Enum):
+    ten_seconds = '10s'
+    thirty_seconds = '30s'
+    one_minute = '1m'
+    one_minute_thirty_seconds = '1m30s'
+    two_minutes = '2m'
 
 
 def object_id_to_str(documents):

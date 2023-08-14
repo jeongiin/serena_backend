@@ -1,46 +1,15 @@
 import warnings
-from enum import Enum
 
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 
-from . import MeloDB, str_to_object_id, object_id_to_str
+from . import MeloDB, str_to_object_id, object_id_to_str, Genre, Instrument, Speed, Duration
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 MeloDB = MeloDB()
 models_api = APIRouter(prefix='/models', tags=['models'])
-
-
-class Genre(str, Enum):
-    classic = 'classic'
-    jazz = 'jazz'
-    pop = 'pop'
-    rock = 'rock'
-    hiphop = 'hiphop'
-
-
-class Instrument(str, Enum):
-    piano = 'piano'
-    guitar = 'guitar'
-    drum = 'drum'
-    organ = 'organ'
-    clarinet = 'clarinet'
-
-
-class Speed(str, Enum):
-    slow = 'slow'
-    medium = 'medium'
-    fast = 'fast'
-
-
-class Duration(str, Enum):
-    ten_seconds = '10s'
-    thirty_seconds = '30s'
-    one_minute = '1m'
-    one_minute_thirty_seconds = '1m30s'
-    two_minutes = '2m'
 
 
 class ImageGenerateQuery(BaseModel):
@@ -63,7 +32,6 @@ class MusicGenerateQuery(BaseModel):
 
 
 class MusicSaveQuery(BaseModel):
-    user_id: str
     music_id: str
     title: str
     desc: str = None
@@ -151,10 +119,10 @@ async def save_generated_music(item: MusicSaveQuery):
         raise HTTPException(status_code=404, detail="Music Not found")
 
     item = item.model_dump(mode='json')
-    item['genre'] = music_info.genre
-    item['instrument'] = music_info.instrument
-    item['speed'] = music_info.speed
-    item['duration'] = music_info.duration
+    item['genre'] = music_info['genre']
+    item['instrument'] = music_info['instrument']
+    item['speed'] = music_info['speed']
+    item['duration'] = music_info['duration']
     del item['music_id']
 
     MeloDB.melo_music.update_one({"_id": music_id}, {"$set": item})
@@ -165,7 +133,7 @@ async def save_generated_music(item: MusicSaveQuery):
 # 생성 음악 정보 가져오기
 @models_api.get("/music/info")
 async def get_generated_music_info(user_id: str = None, music_id: str = None):
-    if user_id: # 특정 유저가 생성한 모든 음악 정보 가져오기
+    if user_id:  # 특정 유저가 생성한 모든 음악 정보 가져오기
         user_id = str_to_object_id(user_id)
         user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
         if not user:
@@ -178,7 +146,7 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
 
         return JSONResponse(status_code=200, content=music)
 
-    elif music_id: # 특정 음악 정보 가져오기
+    elif music_id:  # 특정 음악 정보 가져오기
         music_id = str_to_object_id(music_id)
         music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
         if not music:
@@ -186,7 +154,7 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
 
         return JSONResponse(status_code=200, content=music)
 
-    else: # 모든 음악 정보 가져오기
+    else:  # 모든 음악 정보 가져오기
         music = MeloDB.melo_music.find({})
         music = object_id_to_str(music)
         for i in range(len(music)):
@@ -204,6 +172,7 @@ async def get_generated_music(music_id: str):
         raise HTTPException(status_code=404, detail="Music Not found")
 
     return FileResponse('/api/music_outputs/test1.wav', filename='test1.wav', headers=music)
+    # return FileResponse(f'/api/music_outputs/{str(music_id)}.wav', filename=f'{str(music_id)}.wav', headers=music)
 
 
 # 생성 음악 제거
