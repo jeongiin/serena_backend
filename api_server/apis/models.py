@@ -194,6 +194,21 @@ async def get_generated_music(music_id: str):
     # return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=music)
 
 
+# 생성 음악 썸네일 가져오기
+@models_api.get("/music/thumbnail")
+async def get_generated_music_thumbnail(music_id: str):
+    music_id = str_to_object_id(music_id)
+    music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
+    if not music:
+        raise HTTPException(status_code=404, detail="Music Not found")
+
+    # 헤더에 한글 전송 불가
+    if 'title' in music.keys():
+        del music['title'], music['desc']
+
+    return FileResponse(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'), headers=music)
+
+
 # 생성 음악 제거
 @models_api.delete("/music")
 async def delete_generated_music(music_id: str):
@@ -204,5 +219,6 @@ async def delete_generated_music(music_id: str):
 
     MeloDB.melo_music.delete_one({"_id": music_id})
     os.remove(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
+    os.remove(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'))
 
     return JSONResponse(status_code=200, content={"music_id": str(music_id)})
