@@ -161,3 +161,8 @@ mongodata/
 
 # nginx auth file
 .htpasswd
+
+# docker files
+Dockerfile.api
+docker-compose.yml
+docker.sh
