@@ -8,4 +8,4 @@ RUN apk update && \
 
 EXPOSE 34567
 
-CMD ["python3", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "34567"]
+CMD ["python3", "-m", "uvicorn", "main:app", "--host", "api", "--port", "34567"]
