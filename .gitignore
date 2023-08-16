@@ -159,5 +159,5 @@ cython_debug/
 # MongoDB Datafolder
 mongodata/
 
-# docker shell file
-docker.sh
+# nginx auth file
+.htpasswd
