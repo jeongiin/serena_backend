@@ -4,12 +4,14 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import HTTPException
 from pymongo import MongoClient
+import os
 
 
 class MeloDB:
     def __init__(self):
-        client = MongoClient('mongodb://root:sktmelovision@mongo', 27017)
-        # TODO: localhost -> mongo
+        DB_ID = os.environ.get('DB_ID')
+        DB_PASSWORD = os.environ.get('DB_PASSWORD')
+        client = MongoClient(f'mongodb://{DB_ID}:{DB_PASSWORD}@mongo', 27017)
         self.melo_db = client['melovision']
         self.melo_users = self.melo_db['users']
         self.melo_babies = self.melo_db['babies']
