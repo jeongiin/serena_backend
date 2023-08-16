@@ -158,3 +158,6 @@ cython_debug/
 
 # MongoDB Datafolder
 mongodata/
+
+# nginx auth file
+.htpasswd
