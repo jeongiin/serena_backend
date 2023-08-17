@@ -1,10 +1,12 @@
+import io
 import os
 import warnings
 
+import requests
 from PIL import Image
 from bson import ObjectId
 from fastapi import HTTPException, APIRouter, UploadFile, Form
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 from . import MeloDB, str_to_object_id, object_id_to_str, Genre, Instrument, Speed, Duration
@@ -104,12 +106,17 @@ async def create_generated_music(item: MusicGenerateQuery):
     # -------------------------------------------
 
     music_id = ObjectId()
-    item = item.model_dump()
+    item = item.model_dump(mode='json')
     item['music_id'] = str(music_id)
     item['instrument'] = item['instrument'].replace(" ", "")
 
+    response = requests.get('http://58.120.240.206:45678/music/generate', params=item)
+    # TODO: 아이피 도커 네트워크로 변경
+    data_stream = io.BytesIO(response.content)
+
     if item['title'] == 'test' or True:
-        return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=item)
+        return StreamingResponse(data_stream, media_type="audio/x-wav", headers=item)
+        # return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=item)
     else:
         return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=item)
 

@@ -50,11 +50,11 @@ class Speed(str, Enum):
 
 
 class Duration(str, Enum):
-    ten_seconds = '10s'
-    thirty_seconds = '30s'
-    one_minute = '1m'
-    one_minute_thirty_seconds = '1m30s'
-    two_minutes = '2m'
+    ten_seconds = '10'
+    thirty_seconds = '30'
+    one_minute = '60'
+    one_minute_thirty_seconds = '90'
+    two_minutes = '120'
 
 
 def object_id_to_str(documents):
