@@ -163,6 +163,6 @@ mongodata/
 .htpasswd
 
 # docker files
-Dockerfile.api
+Dockerfile.*
 docker-compose.yml
 docker.sh
