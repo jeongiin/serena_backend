@@ -2,10 +2,10 @@ import os
 import warnings
 
 from PIL import Image
+from bson import ObjectId
 from fastapi import HTTPException, APIRouter, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
-from bson import ObjectId
 
 from . import MeloDB, str_to_object_id, object_id_to_str, Genre, Instrument, Speed, Duration
 
@@ -33,7 +33,7 @@ class ImageGenerateQuery(BaseModel):
 class MusicGenerateQuery(BaseModel):
     user_id: str
     genre: Genre
-    instrument: Instrument
+    instrument: str
     speed: Speed
     duration: Duration
     title: str
@@ -106,6 +106,7 @@ async def create_generated_music(item: MusicGenerateQuery):
     music_id = ObjectId()
     item = item.model_dump()
     item['music_id'] = str(music_id)
+    item['instrument'] = item['instrument'].replace(" ", "")
 
     return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=item)
     # return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=item)
@@ -117,16 +118,16 @@ async def save_generated_music(image_file: UploadFile,
                                user_id: str = Form(...),
                                music_id: str = Form(...),
                                genre: Genre = Form(...),
-                               instrument: Instrument = Form(...),
+                               instrument: str = Form(...),
                                speed: Speed = Form(...),
                                duration: Duration = Form(...),
                                title: str = Form(...),
                                desc: str = Form(...)):
     item = dict({
-        "_id": ObjectId(music_id),
+        "_id": str_to_object_id(music_id),
         "user_id": user_id,
         "genre": genre,
-        "instrument": instrument,
+        "instrument": instrument.replace(" ", "").split(","),
         "speed": speed,
         "duration": duration,
         "title": title,
@@ -160,7 +161,7 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
         if not user:
             raise HTTPException(status_code=404, detail="User Not found")
 
-        music = MeloDB.melo_music.find({"user_id": user_id})
+        music = MeloDB.melo_music.find({"user_id": str(user_id)})
         music = object_id_to_str(music)
         for i in range(len(music)):
             music[i]['music_id'] = music[i].pop('_id')
@@ -196,6 +197,9 @@ async def get_generated_music(music_id: str):
     if 'title' in music.keys():
         del music['title'], music['desc']
 
+    # instrument 리스트를 string으로 변환
+    music['instrument'] = ','.join(music['instrument'])
+
     return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=music)
     # return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=music)
 
@@ -211,6 +215,9 @@ async def get_generated_music_thumbnail(music_id: str):
     # 헤더에 한글 전송 불가
     if 'title' in music.keys():
         del music['title'], music['desc']
+
+    # instrument 리스트를 string으로 변환
+    music['instrument'] = ','.join(music['instrument'])
 
     return FileResponse(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'), headers=music)
 
