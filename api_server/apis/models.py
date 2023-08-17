@@ -108,8 +108,10 @@ async def create_generated_music(item: MusicGenerateQuery):
     item['music_id'] = str(music_id)
     item['instrument'] = item['instrument'].replace(" ", "")
 
-    return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=item)
-    # return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=item)
+    if item['title'] == 'test' or True:
+        return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=item)
+    else:
+        return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=item)
 
 
 # 생성 음악 저장하기
@@ -149,7 +151,10 @@ async def save_generated_music(image_file: UploadFile,
         print(e)
         raise HTTPException(status_code=500, detail=f"Upload failed {e}")
 
-    return JSONResponse(status_code=200, content={"music_id": str(music_id)})
+    if title == 'test':
+        return JSONResponse(status_code=200, content={"music_id": "64d457149fa87d80fcb9af50"})
+    else:
+        return JSONResponse(status_code=200, content={"music_id": str(music_id)})
 
 
 # 생성 음악 정보 가져오기
