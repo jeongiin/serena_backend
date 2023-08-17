@@ -1,10 +1,11 @@
 import os
 import warnings
-from PIL import Image
 
+from PIL import Image
 from fastapi import HTTPException, APIRouter, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
+from bson import ObjectId
 
 from . import MeloDB, str_to_object_id, object_id_to_str, Genre, Instrument, Speed, Duration
 
@@ -35,6 +36,8 @@ class MusicGenerateQuery(BaseModel):
     instrument: Instrument
     speed: Speed
     duration: Duration
+    title: str
+    desc: str
 
 
 # 생성 앨범아트 이미지 생성하기
@@ -100,9 +103,8 @@ async def create_generated_music(item: MusicGenerateQuery):
     # # TODO: 모델에 음악 생성 요청하는 코드 작성
     # -------------------------------------------
 
-    item = item.model_dump(mode='json')
-
-    music_id = MeloDB.melo_music.insert_one(item.copy()).inserted_id
+    music_id = ObjectId()
+    item = item.model_dump()
     item['music_id'] = str(music_id)
 
     return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=item)
@@ -111,11 +113,27 @@ async def create_generated_music(item: MusicGenerateQuery):
 
 # 생성 음악 저장하기
 @models_api.post("/music/save")
-async def save_generated_music(image_file: UploadFile, music_id: str = Form(...), title: str = Form(...), desc: str = Form(...)):
-    music_id = str_to_object_id(music_id)
-    music_info = MeloDB.melo_music.find_one({"_id": music_id})
-    if not music_info:
-        raise HTTPException(status_code=404, detail="Music Not found")
+async def save_generated_music(image_file: UploadFile,
+                               user_id: str = Form(...),
+                               music_id: str = Form(...),
+                               genre: Genre = Form(...),
+                               instrument: Instrument = Form(...),
+                               speed: Speed = Form(...),
+                               duration: Duration = Form(...),
+                               title: str = Form(...),
+                               desc: str = Form(...)):
+    item = dict({
+        "_id": ObjectId(music_id),
+        "user_id": user_id,
+        "genre": genre,
+        "instrument": instrument,
+        "speed": speed,
+        "duration": duration,
+        "title": title,
+        "desc": desc,
+    })
+
+    music_id = MeloDB.melo_music.insert_one(item).inserted_id
 
     image_file_extension = image_file.filename.split('.')[-1].lower()
     if image_file_extension not in ['jpg', 'jpeg', 'png', 'heic']:
@@ -128,19 +146,7 @@ async def save_generated_music(image_file: UploadFile, music_id: str = Form(...)
 
     except Exception as e:
         print(e)
-        raise HTTPException(status_code=500, detail="Upload failed")
-
-    item = dict({
-        "user_id": music_info['user_id'],
-        "title": title,
-        "desc": desc,
-        "genre": music_info['genre'],
-        "instrument": music_info['instrument'],
-        "speed": music_info['speed'],
-        "duration": music_info['duration'],
-    })
-
-    MeloDB.melo_music.update_one({"_id": music_id}, {"$set": item})
+        raise HTTPException(status_code=500, detail=f"Upload failed {e}")
 
     return JSONResponse(status_code=200, content={"music_id": str(music_id)})
 

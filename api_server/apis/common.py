@@ -18,6 +18,7 @@ class User(BaseModel):
     phone: str
     address: str
     desc: str = None
+    expected_pd: int = None
 
 
 class Baby(BaseModel):
