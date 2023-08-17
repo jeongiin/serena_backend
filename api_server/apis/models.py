@@ -110,8 +110,7 @@ async def create_generated_music(item: MusicGenerateQuery):
     item['music_id'] = str(music_id)
     item['instrument'] = item['instrument'].replace(" ", "")
 
-    response = requests.get('http://58.120.240.206:45678/music/generate', params=item)
-    # TODO: 아이피 도커 네트워크로 변경
+    response = requests.get('http://music_gan:45678/music/generate', params=item)
     data_stream = io.BytesIO(response.content)
 
     if item['title'] == 'test' or True:
