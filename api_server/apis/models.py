@@ -115,10 +115,10 @@ async def create_generated_music(item: MusicGenerateQuery):
     data_stream = io.BytesIO(response.content)
 
     if item['title'] == 'test' or True:
-        return StreamingResponse(data_stream, media_type="audio/x-wav", headers=item)
-        # return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=item)
+        return StreamingResponse(data_stream, media_type="audio/x-wav")
+        # return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'))
     else:
-        return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=item)
+        return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
 
 
 # 생성 음악 저장하기
@@ -207,15 +207,11 @@ async def get_generated_music(music_id: str):
     if not music:
         raise HTTPException(status_code=404, detail="Music Not found")
 
-    # 헤더에 한글 전송 불가
-    if 'title' in music.keys():
-        del music['title'], music['desc']
-
     # instrument 리스트를 string으로 변환
     music['instrument'] = ','.join(music['instrument'])
 
-    return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=music)
-    # return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=music)
+    return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'))
+    # return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
 
 
 # 생성 음악 썸네일 가져오기
@@ -226,14 +222,10 @@ async def get_generated_music_thumbnail(music_id: str):
     if not music:
         raise HTTPException(status_code=404, detail="Music Not found")
 
-    # 헤더에 한글 전송 불가
-    if 'title' in music.keys():
-        del music['title'], music['desc']
-
     # instrument 리스트를 string으로 변환
     music['instrument'] = ','.join(music['instrument'])
 
-    return FileResponse(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'), headers=music)
+    return FileResponse(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'))
 
 
 # 생성 음악 제거
