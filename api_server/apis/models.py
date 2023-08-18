@@ -111,7 +111,7 @@ async def create_generated_music(item: MusicGenerateQuery):
     item['music_id'] = str(music_id)
     item['instrument'] = item['instrument'].replace(" ", "")
 
-    response = requests.get('http://music_gan:45678/music/generate', params=item)
+    response = requests.get('http://music_gen:45678/music', params=item)
     data_stream = io.BytesIO(response.content)
 
     if item['title'] == 'test' or True:
@@ -253,16 +253,11 @@ async def delete_generated_music(music_id: str):
 
 @models_api.get("/emotions")
 async def get_emotions(desc: str):
-    # -------------------------------------------
-    # # TODO: 감정 분석 모델에 감정 분석 요청하는 코드 작성
-    # -------------------------------------------
-
-    emotions = dict({
-        "emotions": [
-            "happy",
-            "surprised",
-            "sad",
-        ]
+    params = dict({
+        "text": desc
     })
+
+    response = requests.get('http://classify_emotions:56789/emotions', params=params)
+    emotions = response.json()
 
     return JSONResponse(status_code=200, content=emotions)
