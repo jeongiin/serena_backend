@@ -1,8 +1,12 @@
 import io
 import time
+import warnings
 
 from audiocraft.models import musicgen
 from scipy.io.wavfile import write
+
+warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=UserWarning)
 
 
 def generate_prompt(options: dict):

@@ -38,6 +38,7 @@ class MusicGenerateQuery(BaseModel):
     instrument: str
     speed: Speed
     duration: Duration
+    emotion: str
     title: str
     desc: str
 
@@ -110,7 +111,7 @@ async def create_generated_music(item: MusicGenerateQuery):
     item['music_id'] = str(music_id)
     item['instrument'] = item['instrument'].replace(" ", "")
 
-    response = requests.get('http://music_gan:45678/music/generate', params=item)
+    response = requests.get('http://music_gen:45678/music', params=item)
     data_stream = io.BytesIO(response.content)
 
     if item['title'] == 'test' or True:
@@ -129,6 +130,7 @@ async def save_generated_music(image_file: UploadFile,
                                instrument: str = Form(...),
                                speed: Speed = Form(...),
                                duration: Duration = Form(...),
+                               emotion: str = Form(...),
                                title: str = Form(...),
                                desc: str = Form(...)):
     item = dict({
@@ -138,6 +140,7 @@ async def save_generated_music(image_file: UploadFile,
         "instrument": instrument.replace(" ", "").split(","),
         "speed": speed,
         "duration": duration,
+        "emotion": emotion,
         "title": title,
         "desc": desc,
     })
@@ -246,3 +249,15 @@ async def delete_generated_music(music_id: str):
     os.remove(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'))
 
     return JSONResponse(status_code=200, content={"music_id": str(music_id)})
+
+
+@models_api.get("/emotions")
+async def get_emotions(desc: str):
+    params = dict({
+        "text": desc
+    })
+
+    response = requests.get('http://classify_emotions:56789/emotions', params=params)
+    emotions = response.json()
+
+    return JSONResponse(status_code=200, content=emotions)
