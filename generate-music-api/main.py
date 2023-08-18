@@ -9,16 +9,16 @@ from music_generator import genearate_music, load_model, generate_prompt
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-app = FastAPI(title="SKT FLY AI Melovision Internal Music GAN Service",
+app = FastAPI(title="SKT FLY AI Melovision Internal Music GEN Service",
               redoc_url=None)
 
 
 @app.get("/")
 async def root():
-    return {"message": "SKT FLY AI Melovision Internal Music GAN Service"}
+    return {"message": "SKT FLY AI Melovision Internal Music GEN Service"}
 
 
-@app.get("/music/generate")
+@app.get("/music")
 async def generate_music(genre: str, instrument: str, speed: str, duration: int, title: str = None, desc: str = None):
     model = load_model(duration=duration)
     options = {
