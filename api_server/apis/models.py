@@ -113,9 +113,11 @@ async def create_generated_music(item: MusicGenerateQuery):
 
     response = requests.get('http://music_gen:45678/music', params=item)
     data_stream = io.BytesIO(response.content)
+    with open(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), 'wb') as f:
+        f.write(data_stream.getbuffer())
 
     if item['title'] == 'test' or True:
-        return StreamingResponse(data_stream, media_type="audio/x-wav")
+        return StreamingResponse(data_stream, media_type="audio/x-wav", headers={"music_id": str(music_id)})
         # return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'))
     else:
         return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
@@ -207,11 +209,8 @@ async def get_generated_music(music_id: str):
     if not music:
         raise HTTPException(status_code=404, detail="Music Not found")
 
-    # instrument 리스트를 string으로 변환
-    music['instrument'] = ','.join(music['instrument'])
-
-    return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'))
-    # return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
+    # return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'))
+    return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
 
 
 # 생성 음악 썸네일 가져오기
