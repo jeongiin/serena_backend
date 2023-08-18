@@ -38,6 +38,7 @@ class MusicGenerateQuery(BaseModel):
     instrument: str
     speed: Speed
     duration: Duration
+    emotion: str
     title: str
     desc: str
 
@@ -129,6 +130,7 @@ async def save_generated_music(image_file: UploadFile,
                                instrument: str = Form(...),
                                speed: Speed = Form(...),
                                duration: Duration = Form(...),
+                               emotion: str = Form(...),
                                title: str = Form(...),
                                desc: str = Form(...)):
     item = dict({
@@ -138,6 +140,7 @@ async def save_generated_music(image_file: UploadFile,
         "instrument": instrument.replace(" ", "").split(","),
         "speed": speed,
         "duration": duration,
+        "emotion": emotion,
         "title": title,
         "desc": desc,
     })
@@ -246,3 +249,20 @@ async def delete_generated_music(music_id: str):
     os.remove(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'))
 
     return JSONResponse(status_code=200, content={"music_id": str(music_id)})
+
+
+@models_api.get("/emotions")
+async def get_emotions(desc: str):
+    # -------------------------------------------
+    # # TODO: 감정 분석 모델에 감정 분석 요청하는 코드 작성
+    # -------------------------------------------
+
+    emotions = dict({
+        "emotions": [
+            "happy",
+            "surprised",
+            "sad",
+        ]
+    })
+
+    return JSONResponse(status_code=200, content=emotions)
