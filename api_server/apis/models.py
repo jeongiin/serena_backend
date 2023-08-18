@@ -1,59 +1,31 @@
+import io
+import os
 import warnings
-from enum import Enum
 
-from fastapi import HTTPException, APIRouter
-from fastapi.responses import JSONResponse
+import requests
+from PIL import Image
+from bson import ObjectId
+from fastapi import HTTPException, APIRouter, UploadFile, Form
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import MeloDB, str_to_object_id, object_id_to_str
+from . import MeloDB, str_to_object_id, object_id_to_str, Genre, Instrument, Speed, Duration
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 MeloDB = MeloDB()
 models_api = APIRouter(prefix='/models', tags=['models'])
 
+music_outputs_path = os.path.join('/api', 'music_outputs')
+music_thumbnails_path = os.path.join('/api', 'music_thumbnails')
 
-# class ContentType(str, Enum):
-#     diary = 'diary'
-#     letter = 'letter'
-#     chat = 'chat'
-
-
-class Genre(str, Enum):
-    classic = 'classic'
-    jazz = 'jazz'
-    pop = 'pop'
-    rock = 'rock'
-    hiphop = 'hiphop'
-
-
-class Instrument(str, Enum):
-    piano = 'piano'
-    guitar = 'guitar'
-    drum = 'drum'
-    organ = 'organ'
-    clarinet = 'clarinet'
-
-
-class Speed(str, Enum):
-    slow = 'slow'
-    medium = 'medium'
-    fast = 'fast'
-
-
-class Duration(str, Enum):
-    ten_seconds = '10s'
-    thirty_seconds = '30s'
-    one_minute = '1m'
-    one_minute_thirty_seconds = '1m30s'
-    two_minutes = '2m'
+os.makedirs(music_outputs_path, exist_ok=True)
+os.makedirs(music_thumbnails_path, exist_ok=True)
 
 
 class ImageGenerateQuery(BaseModel):
     user_id: str
     baby_id: str
-    # content_type: ContentType
-    # content_id: str
     genre: Genre
     instrument: Instrument
     speed: Speed
@@ -62,13 +34,12 @@ class ImageGenerateQuery(BaseModel):
 
 class MusicGenerateQuery(BaseModel):
     user_id: str
-    baby_id: str
-    # content_type: ContentType
-    # content_id: str
     genre: Genre
-    instrument: Instrument
+    instrument: str
     speed: Speed
     duration: Duration
+    title: str
+    desc: str
 
 
 # 생성 앨범아트 이미지 생성하기
@@ -125,60 +96,153 @@ async def delete_generated_albumart_image(user_id: str, baby_id: str, image_id: 
 # 생성 음악 생성하기
 @models_api.post("/music")
 async def create_generated_music(item: MusicGenerateQuery):
-    # content_type_map = {
-    #     ContentType.diary: MeloDB.melo_diaries,
-    #     ContentType.letter: MeloDB.melo_letters,
-    #     ContentType.chat: MeloDB.melo_chats,
-    # }
-    #
-    # content_id = str_to_object_id(item.content_id)
-    # content = content_type_map[item.content_type].find_one({"_id": content_id, "user_id": item.user_id, "baby_id": item.baby_id})
-    # if not content:
-    #     raise HTTPException(status_code=404, detail="Not found")
-
-    user = MeloDB.melo_users.find_one({"_id": str_to_object_id(item.user_id)})
+    user_id = str_to_object_id(item.user_id)
+    user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
     if not user:
         raise HTTPException(status_code=404, detail="User Not found")
-
-    baby = MeloDB.melo_babies.find_one({"_id": str_to_object_id(item.baby_id)})
-    if not baby:
-        raise HTTPException(status_code=404, detail="Baby Not found")
 
     # -------------------------------------------
     # # TODO: 모델에 음악 생성 요청하는 코드 작성
     # -------------------------------------------
 
+    music_id = ObjectId()
     item = item.model_dump(mode='json')
-    item['music_url'] = None
+    item['music_id'] = str(music_id)
+    item['instrument'] = item['instrument'].replace(" ", "")
+
+    response = requests.get('http://music_gan:45678/music/generate', params=item)
+    data_stream = io.BytesIO(response.content)
+
+    if item['title'] == 'test' or True:
+        return StreamingResponse(data_stream, media_type="audio/x-wav", headers=item)
+        # return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=item)
+    else:
+        return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=item)
+
+
+# 생성 음악 저장하기
+@models_api.post("/music/save")
+async def save_generated_music(image_file: UploadFile,
+                               user_id: str = Form(...),
+                               music_id: str = Form(...),
+                               genre: Genre = Form(...),
+                               instrument: str = Form(...),
+                               speed: Speed = Form(...),
+                               duration: Duration = Form(...),
+                               title: str = Form(...),
+                               desc: str = Form(...)):
+    item = dict({
+        "_id": str_to_object_id(music_id),
+        "user_id": user_id,
+        "genre": genre,
+        "instrument": instrument.replace(" ", "").split(","),
+        "speed": speed,
+        "duration": duration,
+        "title": title,
+        "desc": desc,
+    })
 
     music_id = MeloDB.melo_music.insert_one(item).inserted_id
 
-    return JSONResponse(status_code=202, content={"music_id": str(music_id)})
+    image_file_extension = image_file.filename.split('.')[-1].lower()
+    if image_file_extension not in ['jpg', 'jpeg', 'png', 'heic']:
+        raise HTTPException(status_code=400, detail="Invalid image file extension")
 
-    # raise HTTPException(status_code=501, detail="Not implemented (create_generated_music)")
+    try:
+        image = Image.open(image_file.file)
+        image = image.convert('RGB')
+        image.save(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'))
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail=f"Upload failed {e}")
+
+    if title == 'test':
+        return JSONResponse(status_code=200, content={"music_id": "64d457149fa87d80fcb9af50"})
+    else:
+        return JSONResponse(status_code=200, content={"music_id": str(music_id)})
 
 
-# 생성 음악 가져오기
+# 생성 음악 정보 가져오기
+@models_api.get("/music/info")
+async def get_generated_music_info(user_id: str = None, music_id: str = None):
+    if user_id:  # 특정 유저가 생성한 모든 음악 정보 가져오기
+        user_id = str_to_object_id(user_id)
+        user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
+        if not user:
+            raise HTTPException(status_code=404, detail="User Not found")
+
+        music = MeloDB.melo_music.find({"user_id": str(user_id)})
+        music = object_id_to_str(music)
+        for i in range(len(music)):
+            music[i]['music_id'] = music[i].pop('_id')
+
+        return JSONResponse(status_code=200, content=music)
+
+    elif music_id:  # 특정 음악 정보 가져오기
+        music_id = str_to_object_id(music_id)
+        music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
+        if not music:
+            raise HTTPException(status_code=404, detail="Music Not found")
+
+        return JSONResponse(status_code=200, content=music)
+
+    else:  # 모든 음악 정보 가져오기
+        music = MeloDB.melo_music.find({})
+        music = object_id_to_str(music)
+        for i in range(len(music)):
+            music[i]['music_id'] = music[i].pop('_id')
+
+        return JSONResponse(status_code=200, content=music)
+
+
+# 생성 음악 파일 가져오기
 @models_api.get("/music")
-async def get_generated_music(user_id: str, baby_id: str, music_id: str):
+async def get_generated_music(music_id: str):
     music_id = str_to_object_id(music_id)
-    music = MeloDB.melo_music.find_one({"_id": music_id, "user_id": user_id, "baby_id": baby_id})
+    music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
     if not music:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail="Music Not found")
 
-    music['id'] = str(music['_id'])
+    # 헤더에 한글 전송 불가
+    if 'title' in music.keys():
+        del music['title'], music['desc']
 
-    return JSONResponse(status_code=200, content=music)
+    # instrument 리스트를 string으로 변환
+    music['instrument'] = ','.join(music['instrument'])
+
+    return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'), headers=music)
+    # return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), headers=music)
+
+
+# 생성 음악 썸네일 가져오기
+@models_api.get("/music/thumbnail")
+async def get_generated_music_thumbnail(music_id: str):
+    music_id = str_to_object_id(music_id)
+    music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
+    if not music:
+        raise HTTPException(status_code=404, detail="Music Not found")
+
+    # 헤더에 한글 전송 불가
+    if 'title' in music.keys():
+        del music['title'], music['desc']
+
+    # instrument 리스트를 string으로 변환
+    music['instrument'] = ','.join(music['instrument'])
+
+    return FileResponse(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'), headers=music)
 
 
 # 생성 음악 제거
 @models_api.delete("/music")
-async def delete_generated_music(user_id: str, baby_id: str, music_id: str):
+async def delete_generated_music(music_id: str):
     music_id = str_to_object_id(music_id)
-    music = MeloDB.melo_music.find_one({"_id": music_id, "user_id": user_id, "baby_id": baby_id})
+    music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
     if not music:
         raise HTTPException(status_code=404, detail="Not found")
 
-    MeloDB.melo_music.delete_one({"_id": music_id, "user_id": user_id, "baby_id": baby_id})
+    MeloDB.melo_music.delete_one({"_id": music_id})
+    os.remove(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
+    os.remove(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'))
 
     return JSONResponse(status_code=200, content={"music_id": str(music_id)})

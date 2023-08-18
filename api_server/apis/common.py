@@ -1,21 +1,15 @@
 import warnings
-from enum import Enum
 
 from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import MeloDB, object_id_to_str, str_to_object_id
+from . import MeloDB, object_id_to_str, str_to_object_id, Sex
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 MeloDB = MeloDB()
 common_api = APIRouter(prefix='/common', tags=['common'])
-
-
-class Sex(str, Enum):
-    male = 'male'
-    female = 'female'
 
 
 class User(BaseModel):
@@ -24,6 +18,7 @@ class User(BaseModel):
     phone: str
     address: str
     desc: str = None
+    expected_pd: int = None
 
 
 class Baby(BaseModel):

@@ -5,3 +5,6 @@ trio
 pytest
 pymongo
 pydantic
+python-multipart
+Pillow
+requests
