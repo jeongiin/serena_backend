@@ -39,7 +39,7 @@ class MusicGenerateQuery(BaseModel):
     speed: Speed
     duration: Duration
     emotion: str
-    title: str
+    title: str = None
     desc: str
 
 
@@ -108,12 +108,18 @@ async def create_generated_music(item: MusicGenerateQuery):
     item['instrument'] = item['instrument'].replace(" ", "")
 
     response = requests.get('http://music_gen:45678/music', params=item)
+    prompt = response.headers['prompt']
     data_stream = io.BytesIO(response.content)
     with open(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), 'wb') as f:
         f.write(data_stream.getbuffer())
 
+    response_headers = {
+        "prompt": prompt,
+        "music_id": str(music_id)
+    }
+
     if item['title'] == 'test' or True:
-        return StreamingResponse(data_stream, media_type="audio/x-wav", headers={"music_id": str(music_id)})
+        return StreamingResponse(data_stream, media_type="audio/x-wav", headers=response_headers)
     else:
         return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
 
@@ -204,7 +210,6 @@ async def get_generated_music(music_id: str):
     if not music:
         raise HTTPException(status_code=404, detail="Music Not found")
 
-    # return FileResponse(os.path.join(music_outputs_path, '64d457149fa87d80fcb9af50.wav'))
     return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
 
 

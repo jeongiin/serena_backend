@@ -38,7 +38,7 @@ async def generate_music(genre: str, instrument: str, speed: str, duration: int,
     gc.collect()
     torch.cuda.empty_cache()
 
-    return StreamingResponse(output_music)
+    return StreamingResponse(output_music, headers={"prompt": prompt})
 
 
 if __name__ == '__main__':
