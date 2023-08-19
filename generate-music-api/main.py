@@ -19,12 +19,13 @@ async def root():
 
 
 @app.get("/music")
-async def generate_music(genre: str, instrument: str, speed: str, duration: int, title: str = None, desc: str = None):
+async def generate_music(genre: str, instrument: str, speed: str, duration: int, emotion: str):
     model = load_model(duration=duration)
     options = {
         'genre': genre,
         'instrument': instrument.split(','),
-        'speed': speed
+        'speed': speed,
+        'emotion': emotion
     }
 
     prompt = generate_prompt(options)
