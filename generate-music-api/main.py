@@ -1,6 +1,8 @@
+import gc
 import io
 import warnings
 
+import torch
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
@@ -31,6 +33,10 @@ async def generate_music(genre: str, instrument: str, speed: str, duration: int,
     prompt = generate_prompt(options)
     output_music = genearate_music(prompt, model)
     output_music = io.BytesIO(output_music)
+
+    del model
+    gc.collect()
+    torch.cuda.empty_cache()
 
     return StreamingResponse(output_music)
 
