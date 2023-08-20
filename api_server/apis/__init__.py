@@ -1,10 +1,10 @@
+import os
 from enum import Enum
 
 from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import HTTPException
 from pymongo import MongoClient
-import os
 
 
 class MeloDB:
@@ -72,3 +72,17 @@ def str_to_object_id(string):
     except InvalidId:
         raise HTTPException(status_code=400, detail=f"Invalid ObjectId ({string})")
     # TODO: string 반환 안하게 바꾸기
+
+
+def return_internal_server_error(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except HTTPException as e:
+            raise HTTPException(status_code=e.status_code, detail=e.detail)
+        except Exception as e:
+            print(e)
+            raise HTTPException(status_code=500, detail=f"Internal Server Error ({e})")
+
+    return wrapper
+    # TODO: 추후 서비스 개시 전 삭제

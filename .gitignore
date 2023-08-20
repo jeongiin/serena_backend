@@ -165,4 +165,4 @@ mongodata/
 # docker files
 Dockerfile.*
 docker-compose.yml
-docker.sh
+*.sh

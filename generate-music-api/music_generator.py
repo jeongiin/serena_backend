@@ -10,7 +10,7 @@ warnings.simplefilter(action='ignore', category=UserWarning)
 
 
 def generate_prompt(options: dict):
-    prompt = 'a ' + options['genre'] + ' track with ' + ' and '.join(options['instrument']) + ' at ' + options['speed'] + ' bpm' + ' calm'
+    prompt = 'a ' + options['genre'] + ' track with ' + ' and '.join(options['instrument']) + ' at ' + options['speed'] + ' bpm ' + options['emotion']
     print(prompt)
     return prompt
 
