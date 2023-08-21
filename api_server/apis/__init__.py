@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from enum import Enum
 
 from bson import ObjectId
@@ -78,3 +79,9 @@ def return_internal_server_error(func):
 
     return wrapper
     # TODO: 추후 서비스 개시 전 삭제
+
+
+def get_generated_time(object_id):
+    timestamp = object_id.generation_time
+    timestamp_datetime = datetime.fromtimestamp(timestamp.timestamp())
+    return timestamp_datetime.strftime("%Y-%m-%d %H:%M:%S")

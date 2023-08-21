@@ -9,7 +9,7 @@ from fastapi import HTTPException, APIRouter, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import MeloDB, str_to_object_id, object_id_to_str, return_internal_server_error, Genre, Speed, Duration
+from . import MeloDB, str_to_object_id, object_id_to_str, return_internal_server_error, get_generated_time, Genre, Speed, Duration
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -55,9 +55,12 @@ async def create_generated_music(item: MusicGenerateQuery):
         with open(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), 'wb') as f:
             f.write(data_stream.getbuffer())
 
+        generated_time = get_generated_time(music_id)
+
         response_headers = {
             "prompt": prompt,
-            "music_id": str(music_id)
+            "music_id": str(music_id),
+            "generated_time": generated_time,
         }
 
         if item['title'] == 'test' or True:
@@ -92,6 +95,7 @@ async def save_generated_music(image_file: UploadFile,
             "emotion": variables['emotion'],
             "title": variables['title'],
             "desc": variables['desc'],
+            "generated_time": get_generated_time(str_to_object_id(variables['music_id'])),
         })
 
         music = MeloDB.melo_music.find_one({"_id": item['_id']}, {'_id': False})
