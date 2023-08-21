@@ -35,14 +35,6 @@ class Genre(str, Enum):
     hiphop = 'hiphop'
 
 
-class Instrument(str, Enum):
-    piano = 'piano'
-    guitar = 'guitar'
-    drum = 'drum'
-    organ = 'organ'
-    clarinet = 'clarinet'
-
-
 class Speed(str, Enum):
     slow = 'slow'
     medium = 'medium'

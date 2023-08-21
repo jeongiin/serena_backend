@@ -9,7 +9,7 @@ from fastapi import HTTPException, APIRouter, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import MeloDB, str_to_object_id, object_id_to_str, return_internal_server_error, Genre, Instrument, Speed, Duration
+from . import MeloDB, str_to_object_id, object_id_to_str, return_internal_server_error, Genre, Speed, Duration
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -94,11 +94,15 @@ async def save_generated_music(image_file: UploadFile,
             "desc": variables['desc'],
         })
 
+        music = MeloDB.melo_music.find_one({"_id": item['_id']}, {'_id': False})
+        if music:
+            raise HTTPException(status_code=409, detail="Music already exists")
+
         music_id = MeloDB.melo_music.insert_one(item).inserted_id
 
         image_file_extension = image_file.filename.split('.')[-1].lower()
         if image_file_extension not in ['jpg', 'jpeg', 'png', 'heic']:
-            raise HTTPException(status_code=400, detail="Invalid image file extension")
+            raise HTTPException(status_code=415, detail="Unsupported Media Type (Invalid image file extension)")
 
         try:
             image = Image.open(image_file.file)
@@ -135,7 +139,7 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
 
             return JSONResponse(status_code=200, content=music)
 
-        elif variables['music_id']:  # 특정 음악 정보 가져오기
+        elif variables['music_id'] or (variables['user_id'] and variables['music_id']):  # 특정 음악 정보 가져오기
             music_id = str_to_object_id(variables['music_id'])
             music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
             if not music:
