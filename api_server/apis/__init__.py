@@ -1,10 +1,12 @@
 import os
+import traceback
 from datetime import datetime
 from enum import Enum
 
 from bson import ObjectId
 from bson.errors import InvalidId
 from fastapi import HTTPException
+from pydantic import BaseModel
 from pymongo import MongoClient
 
 
@@ -21,6 +23,28 @@ class MeloDB:
         self.melo_chats = self.melo_db['chats']
         self.melo_images = self.melo_db['images']
         self.melo_music = self.melo_db['music']
+
+
+class ResponseModels:
+    class UserIdResponse(BaseModel):
+        user_id: str
+
+    class BabyIdResponse(BaseModel):
+        baby_id: str
+
+    class MusicIdResponse(BaseModel):
+        music_id: str
+
+    class MusicInfoResponse(BaseModel):
+        music_id: str
+        genre: str
+        instrument: list[str]
+        speed: str
+        duration: str
+        emotion: str
+        title: str
+        desc: str
+        generated_time: str
 
 
 class Sex(str, Enum):
@@ -74,7 +98,7 @@ def return_internal_server_error(func):
         except HTTPException as e:
             raise HTTPException(status_code=e.status_code, detail=e.detail)
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
             raise HTTPException(status_code=500, detail=f"Internal Server Error ({e})")
 
     return wrapper

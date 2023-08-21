@@ -9,7 +9,7 @@ from fastapi import HTTPException, APIRouter, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import MeloDB, str_to_object_id, object_id_to_str, return_internal_server_error, get_generated_time, Genre, Speed, Duration
+from . import MeloDB, ResponseModels, str_to_object_id, object_id_to_str, return_internal_server_error, get_generated_time, Genre, Speed, Duration
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -35,8 +35,34 @@ class MusicGenerateQuery(BaseModel):
 
 
 # 생성 음악 생성하기
-@models_api.post("/music")
+@models_api.post("/music", response_class=StreamingResponse, responses={200: {"content": {"audio/x-wav": {}},
+                                                                              "headers": {"prompt": {},
+                                                                                          "music_id": {},
+                                                                                          "generated_time": {}}}})
 async def create_generated_music(item: MusicGenerateQuery):
+    """
+    # 음악 생성하기
+
+    ## Request Body
+    - user_id: 유저 id, string
+    - genre: 장르, string
+    - instrument: 악기, string, comma separated, ex) piano, guitar, drum
+    - speed: 속도, string
+    - duration: 음악 길이, string
+    - emotion: 감정, string
+    - title: 제목, string, default: None
+    - desc: 설명, string
+
+    ## Response Headers
+    - prompt: 생성된 음악의 prompt, string
+    - music_id: 생성된 음악의 id, string
+    - generated_time: 생성된 음악의 생성 시간, string
+
+    ## Response Body
+    - 생성된 음악 파일, audio/x-wav
+
+    """
+
     @return_internal_server_error
     def logic(variables):
         user_id = str_to_object_id(variables['item'].user_id)
@@ -50,6 +76,9 @@ async def create_generated_music(item: MusicGenerateQuery):
         item['instrument'] = item['instrument'].replace(" ", "")
 
         response = requests.get('http://music_gen:45678/music', params=item)
+        if response.status_code == 500:
+            raise HTTPException(status_code=500, detail="Out of Memory")
+
         prompt = response.headers['prompt']
         data_stream = io.BytesIO(response.content)
         with open(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), 'wb') as f:
@@ -72,7 +101,7 @@ async def create_generated_music(item: MusicGenerateQuery):
 
 
 # 생성 음악 저장하기
-@models_api.post("/music/save")
+@models_api.post("/music/save", response_model=ResponseModels.MusicIdResponse)
 async def save_generated_music(image_file: UploadFile,
                                user_id: str = Form(...),
                                music_id: str = Form(...),
@@ -83,6 +112,25 @@ async def save_generated_music(image_file: UploadFile,
                                emotion: str = Form(...),
                                title: str = Form(...),
                                desc: str = Form(...)):
+    """
+    # 음악 저장하기
+
+    ## Request Body
+    - image_file: 썸네일 이미지 파일, image/jpg, image/jpeg, image/png, image/heic
+    - user_id: 유저 id, string
+    - music_id: 음악 id, string
+    - genre: 장르, string
+    - instrument: 악기, string, comma separated, ex) piano, guitar, drum
+    - speed: 속도, string
+    - duration: 음악 길이, string
+    - emotion: 감정, string
+    - title: 제목, string
+    - desc: 설명, string
+
+    ## Response
+    - music_id: 저장된 음악의 id, string
+    """
+
     @return_internal_server_error
     def logic(variables):
         item = dict({
@@ -126,8 +174,36 @@ async def save_generated_music(image_file: UploadFile,
 
 
 # 생성 음악 정보 가져오기
-@models_api.get("/music/info")
+@models_api.get("/music/info", response_model=ResponseModels.MusicInfoResponse)
 async def get_generated_music_info(user_id: str = None, music_id: str = None):
+    """
+    # 음악 정보 가져오기
+
+    ## Request Body
+    - user_id: 유저 id, string, default: None
+    - music_id: 음악 id, string, default: None
+
+    ## Response
+    - music_id: 음악 id, string
+    - genre: 장르, string
+    - instrument: 악기, string, comma separated, ex) piano, guitar, drum
+    - speed: 속도, string
+    - duration: 음악 길이, string
+    - emotion: 감정, string
+    - title: 제목, string
+    - desc: 설명, string
+    - generated_time: 생성 시간, string
+
+    ### user_id가 주어진 경우
+    - 해당 유저가 생성한 모든 음악 정보
+
+    ### music_id가 주어진 경우
+    - 해당 음악 정보
+
+    ### 아무것도 주어지지 않은 경우
+    - 모든 음악 정보
+    """
+
     @return_internal_server_error
     def logic(variables):
         if variables['user_id']:  # 특정 유저가 생성한 모든 음악 정보 가져오기
@@ -163,8 +239,18 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
 
 
 # 생성 음악 파일 가져오기
-@models_api.get("/music")
+@models_api.get("/music", response_class=FileResponse, responses={200: {"content": {"audio/x-wav": {}}}})
 async def get_generated_music(music_id: str):
+    """
+    # 음악 파일 가져오기
+
+    ## Parameters
+    - music_id: 음악 id, string
+
+    ## Response
+    - 생성된 음악 파일: audio/x-wav
+    """
+
     @return_internal_server_error
     def logic(variables):
         music_id = str_to_object_id(variables['music_id'])
@@ -178,8 +264,18 @@ async def get_generated_music(music_id: str):
 
 
 # 생성 음악 썸네일 가져오기
-@models_api.get("/music/thumbnail")
+@models_api.get("/music/thumbnail", response_class=FileResponse, responses={200: {"content": {"image/jpg": {}}}})
 async def get_generated_music_thumbnail(music_id: str):
+    """
+    # 음악 썸네일 가져오기
+
+    ## Parameters
+    - music_id: 음악 id, string
+
+    ## Response
+    - 생성된 음악 썸네일 파일: image/jpg
+    """
+
     @return_internal_server_error
     def logic(variables):
         music_id = str_to_object_id(variables['music_id'])
@@ -196,8 +292,18 @@ async def get_generated_music_thumbnail(music_id: str):
 
 
 # 생성 음악 제거
-@models_api.delete("/music")
+@models_api.delete("/music", response_model=ResponseModels.MusicIdResponse)
 async def delete_generated_music(music_id: str):
+    """
+    # 음악 제거
+
+    ## Parameters
+    - music_id: 음악 id, string
+
+    ## Response
+    - music_id: 제거된 음악의 id, string
+    """
+
     @return_internal_server_error
     def logic(variables):
         music_id = str_to_object_id(variables['music_id'])
@@ -216,6 +322,16 @@ async def delete_generated_music(music_id: str):
 
 @models_api.get("/emotions")
 async def get_emotions(desc: str):
+    """
+    # 감정 분석하기
+
+    ## Parameters
+    - desc: 분석할 설명, string
+
+    ## Response
+    - 감정 분석 결과, json
+    """
+
     @return_internal_server_error
     def logic(variables):
         params = dict({

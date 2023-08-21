@@ -5,6 +5,7 @@ import warnings
 import torch
 import uvicorn
 from fastapi import FastAPI
+from fastapi.exceptions import HTTPException
 from fastapi.responses import StreamingResponse
 
 from music_generator import genearate_music, load_model, generate_prompt
@@ -22,23 +23,27 @@ async def root():
 
 @app.get("/music")
 async def generate_music(genre: str, instrument: str, speed: str, duration: int, emotion: str):
-    model = load_model(duration=duration)
-    options = {
-        'genre': genre,
-        'instrument': instrument.split(','),
-        'speed': speed,
-        'emotion': emotion
-    }
+    try:
+        model = load_model(duration=duration)
+        options = {
+            'genre': genre,
+            'instrument': instrument.split(','),
+            'speed': speed,
+            'emotion': emotion
+        }
 
-    prompt = generate_prompt(options)
-    output_music = genearate_music(prompt, model)
-    output_music = io.BytesIO(output_music)
+        prompt = generate_prompt(options)
+        output_music = genearate_music(prompt, model)
+        output_music = io.BytesIO(output_music)
 
-    del model
-    gc.collect()
-    torch.cuda.empty_cache()
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()
 
-    return StreamingResponse(output_music, headers={"prompt": prompt})
+        return StreamingResponse(output_music, headers={"prompt": prompt})
+
+    except torch.cuda.OutOfMemoryError:
+        return HTTPException(status_code=500, detail="Out of Memory")
 
 
 if __name__ == '__main__':
