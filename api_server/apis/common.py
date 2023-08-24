@@ -18,7 +18,7 @@ class User(BaseModel):
     phone: str
     address: str
     desc: str = None
-    expected_pd: int = None
+    genre: str
 
 
 class Baby(BaseModel):
@@ -42,7 +42,7 @@ async def create_user(item: User):
     - phone: 전화번호, string
     - address: 주소, string
     - desc: 기타 정보, string
-    - expected_pd: 예상 출산일, int
+    - genre: 선호하는 장르, string
 
     ## Response
     - user_id: 생성된 회원의 id, string
@@ -72,17 +72,15 @@ async def get_user(user_id: str):
     - phone: 전화번호, string
     - address: 주소, string
     - desc: 기타 정보, string
-    - expected_pd: 예상 출산일, int
+    - genre: 선호하는 장르, string
     """
 
     @return_internal_server_error
     def logic(variables):
         user_id = str_to_object_id(variables['user_id'])
-        user = MeloDB.melo_users.find_one({"_id": user_id})
+        user = MeloDB.melo_users.find_one({"_id": user_id}, {"_id": False})
         if not user:
             raise HTTPException(status_code=404, detail="Not found")
-
-        user['_id'] = str(user['_id'])
 
         return JSONResponse(status_code=200, content=user)
 
@@ -104,7 +102,7 @@ async def update_user(user_id: str, item: User):
     - phone: 전화번호, string
     - address: 주소, string
     - desc: 기타 정보, string
-    - expected_pd: 예상 출산일, int
+    - genre: 선호하는 장르, string
 
     ## Response
     - user_id: 수정된 회원의 id, string

@@ -2,6 +2,7 @@ fastapi
 uvicorn
 requests
 pydantic
-googletrans==3.1.0a0
 transformers
-tensorflow
+pillow
+torch
+python-multipart

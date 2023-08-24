@@ -1,4 +1,5 @@
 import io
+import os
 import time
 import warnings
 
@@ -8,13 +9,6 @@ from scipy.io.wavfile import write
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
 
-
-def generate_prompt(options: dict):
-    prompt = 'a ' + options['genre'] + ' track with ' + ' and '.join(options['instrument']) + ' at ' + options['speed'] + ' bpm ' + options['emotion']
-    print(prompt)
-    return prompt
-
-
 def load_model(model_size='small', duration=30):
     model = musicgen.MusicGen.get_pretrained(model_size, device='cuda')
     model.set_generation_params(duration=duration)
@@ -22,6 +16,7 @@ def load_model(model_size='small', duration=30):
 
 
 def genearate_music(prompt, model, sampling_rate=32000):
+    print(prompt)
     output_audio = model.generate([prompt], progress=True)
     # scipy.io.wavfile.write(save_path, rate=sampling_rate, data=output_audio[0, 0].cpu().numpy())
 
@@ -36,11 +31,29 @@ def genearate_music(prompt, model, sampling_rate=32000):
 if __name__ == "__main__":
     model = load_model()
     # An 80s driving pop song with heavy drums and synth pads in the background
-    options = {'genre': '80s driving pop', 'instrument': ['heavy drums'],
-               'speed': 'slow', 'mood': 'calm'}
-    prompt = generate_prompt(options)
-    file_name = prompt.replace(' ', '_') + '.wav'
-    print(file_name)
-    start = time.time()
-    genearate_music(prompt, model, save_path=file_name)
-    print('spending time :', time.time() - start)
+    emotions = ['admiration', 'desire', 'gratitude', 'joy', 'love', 'pride', 'realization', 'amusement', 'curiocity',
+                'excitement', 'surprise', 'approval', 'caring', 'neutral', 'optimism', 'relief', 'anger', 'annoyance',
+                'confusion', 'disappointment', 'disapproval', 'disgust', 'embarrassment', 'fear', 'nervousness',
+                'grief', 'remorse', 'sadness']
+    options = {'genre': 'classic', 'instrument': ['piano', 'violin', 'plute', 'clarinet'],
+               'speed': 'medium'}
+
+    for emotion in emotions:
+        path = os.path.join(os.path.dirname(__file__), 'tests', emotion)
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        for i in range(3):
+            options['emotion'] = emotion
+            prompt = generate_prompt(options)
+            file_name = prompt.replace(' ', '_') + f'_{i}.wav'
+            print(file_name)
+            start = time.time()
+            wav_bytes = genearate_music(prompt, model)
+
+            # 생성한 음악을 tests 폴더 안의 각 emotion 폴더에 저장
+            data_stream = io.BytesIO(wav_bytes)
+            with open(os.path.join(path, file_name), 'wb') as f:
+                f.write(data_stream.read())
+
+            print('spending time :', time.time() - start)

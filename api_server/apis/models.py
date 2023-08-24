@@ -9,7 +9,7 @@ from fastapi import HTTPException, APIRouter, UploadFile, Form
 from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
 from pydantic import BaseModel
 
-from . import MeloDB, ResponseModels, str_to_object_id, object_id_to_str, return_internal_server_error, get_generated_time, Genre, Speed, Duration
+from . import MeloDB, ResponseModels, str_to_object_id, object_id_to_str, return_internal_server_error, get_generated_time
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -25,31 +25,28 @@ os.makedirs(music_thumbnails_path, exist_ok=True)
 
 class MusicGenerateQuery(BaseModel):
     user_id: str
-    genre: Genre
-    instrument: str
-    speed: Speed
-    duration: Duration
-    emotion: str
     title: str = None
-    desc: str
+    desc: str = None
+
+
+class MusicSaveQuery(BaseModel):
+    user_id: str
+    music_id: str
+    title: str = None
+    desc: str = None
 
 
 # 생성 음악 생성하기
-@models_api.post("/music", response_class=StreamingResponse, responses={200: {"content": {"audio/x-wav": {}},
-                                                                              "headers": {"prompt": {},
-                                                                                          "music_id": {},
-                                                                                          "generated_time": {}}}})
+@models_api.post("/music", deprecated=True, response_class=StreamingResponse, responses={200: {"content": {"audio/x-wav": {}},
+                                                                                               "headers": {"prompt": {},
+                                                                                                           "music_id": {},
+                                                                                                           "generated_time": {}}}})
 async def create_generated_music(item: MusicGenerateQuery):
     """
     # 음악 생성하기
 
     ## Request Body
     - user_id: 유저 id, string
-    - genre: 장르, string
-    - instrument: 악기, string, comma separated, ex) piano, guitar, drum
-    - speed: 속도, string
-    - duration: 음악 길이, string
-    - emotion: 감정, string
     - title: 제목, string, default: None
     - desc: 설명, string
 
@@ -64,7 +61,7 @@ async def create_generated_music(item: MusicGenerateQuery):
     """
 
     @return_internal_server_error
-    def logic(variables):
+    async def logic(variables):
         user_id = str_to_object_id(variables['item'].user_id)
         user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
         if not user:
@@ -73,9 +70,8 @@ async def create_generated_music(item: MusicGenerateQuery):
         music_id = ObjectId()
         item = variables['item'].model_dump(mode='json')
         item['music_id'] = str(music_id)
-        item['instrument'] = item['instrument'].replace(" ", "")
 
-        response = requests.get('http://music_gen:45678/music', params=item)
+        response = requests.get('http://music_gen:44444/music', params=item)
         if response.status_code == 500:
             raise HTTPException(status_code=500, detail="Out of Memory")
 
@@ -97,33 +93,109 @@ async def create_generated_music(item: MusicGenerateQuery):
         else:
             return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
 
-    return logic(locals())
+    return await logic(locals())
+
+
+# 음악 생성하기 Ver 2
+@models_api.post("/music/v2", response_class=StreamingResponse)
+async def create_generated_music_v2(image: UploadFile, user_id: str = Form(...)):
+    """
+    # 음악 생성하기 Ver 2
+
+    ## Request Body
+    - image: 썸네일 이미지 파일, image/jpg, image/jpeg, image/png, image/heic
+    - user_id: 유저 id, string
+
+    ## Response Headers
+    - caption: 생성된 음악의 caption, string
+    - prompt: 생성된 음악의 prompt, string
+    - genre: 생성된 음악의 장르, string
+    - instrument: 생성된 음악의 악기, string, comma separated, ex) piano, guitar, drum
+    - mood: 생성된 음악의 무드, string
+    - speed: 생성된 음악의 속도, string
+    - music_id: 생성된 음악의 id, string
+    - generated_time: 생성된 음악의 생성 시간, string
+
+    ## Response Body
+    - 생성된 음악 파일, audio/x-wav
+    """
+
+    @return_internal_server_error
+    async def logic(variables):
+        image = variables['image']
+        user_id = str_to_object_id(variables['user_id'])
+        user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
+        if not user:
+            raise HTTPException(status_code=404, detail="User Not found")
+
+        music_id = ObjectId()
+        generated_time = get_generated_time(music_id)
+        genre = user['genre']
+
+        image_extension = image.filename.split('.')[-1].lower()
+        if image_extension not in ['jpg', 'jpeg', 'png', 'heic']:
+            raise HTTPException(status_code=415, detail="Unsupported Media Type (Invalid image file extension)")
+
+        response = requests.post('http://image_to_text:55555/caption', files={'image': image.file})
+        caption = response.json()['caption']
+
+        response = requests.get('http://music_gen:44444/music', params={'caption': caption, 'genre': genre})
+        if response.status_code == 500:
+            raise HTTPException(status_code=500, detail="Out of Memory")
+
+        data_stream = io.BytesIO(response.content)
+        with open(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), 'wb') as f:
+            f.write(data_stream.getbuffer())
+
+        image = Image.open(image.file)
+        image = image.convert('RGB')
+        image.save(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'))
+
+        db_data = {
+            "_id": music_id,
+            "user_id": str(user_id),
+            "caption": caption,
+            "prompt": response.headers['prompt'],
+            "genre": response.headers['genre'],
+            "instrument": response.headers['instrument'],
+            "mood": response.headers['mood'],
+            "speed": response.headers['speed'],
+            "title": None,
+            "desc": None,
+            "generated_time": generated_time,
+        }
+        music_id = MeloDB.melo_temp_music.insert_one(db_data).inserted_id
+
+        response_headers = {
+            "caption": caption,
+            "prompt": response.headers['prompt'],
+            "genre": response.headers['genre'],
+            "instrument": response.headers['instrument'],
+            "mood": response.headers['mood'],
+            "speed": response.headers['speed'],
+            "music_id": str(music_id),
+            "generated_time": generated_time,
+        }
+
+        return StreamingResponse(data_stream, media_type="audio/x-wav", headers=response_headers)
+
+    return await logic(locals())
 
 
 # 생성 음악 저장하기
-@models_api.post("/music/save", response_model=ResponseModels.MusicIdResponse)
-async def save_generated_music(image_file: UploadFile,
+@models_api.post("/music/save", response_model=ResponseModels.MusicIdResponse, deprecated=True)
+async def save_generated_music(image: UploadFile,
                                user_id: str = Form(...),
                                music_id: str = Form(...),
-                               genre: Genre = Form(...),
-                               instrument: str = Form(...),
-                               speed: Speed = Form(...),
-                               duration: Duration = Form(...),
-                               emotion: str = Form(...),
                                title: str = Form(...),
                                desc: str = Form(...)):
     """
     # 음악 저장하기
 
     ## Request Body
-    - image_file: 썸네일 이미지 파일, image/jpg, image/jpeg, image/png, image/heic
+    - image: 썸네일 이미지 파일, image/jpg, image/jpeg, image/png, image/heic
     - user_id: 유저 id, string
     - music_id: 음악 id, string
-    - genre: 장르, string
-    - instrument: 악기, string, comma separated, ex) piano, guitar, drum
-    - speed: 속도, string
-    - duration: 음악 길이, string
-    - emotion: 감정, string
     - title: 제목, string
     - desc: 설명, string
 
@@ -132,15 +204,11 @@ async def save_generated_music(image_file: UploadFile,
     """
 
     @return_internal_server_error
-    def logic(variables):
+    async def logic(variables):
         item = dict({
             "_id": str_to_object_id(variables['music_id']),
             "user_id": variables['user_id'],
             "genre": variables['genre'],
-            "instrument": variables['instrument'].replace(" ", "").split(","),
-            "speed": variables['speed'],
-            "duration": variables['duration'],
-            "emotion": variables['emotion'],
             "title": variables['title'],
             "desc": variables['desc'],
             "generated_time": get_generated_time(str_to_object_id(variables['music_id'])),
@@ -152,12 +220,12 @@ async def save_generated_music(image_file: UploadFile,
 
         music_id = MeloDB.melo_music.insert_one(item).inserted_id
 
-        image_file_extension = image_file.filename.split('.')[-1].lower()
-        if image_file_extension not in ['jpg', 'jpeg', 'png', 'heic']:
+        image_extension = image.filename.split('.')[-1].lower()
+        if image_extension not in ['jpg', 'jpeg', 'png', 'heic']:
             raise HTTPException(status_code=415, detail="Unsupported Media Type (Invalid image file extension)")
 
         try:
-            image = Image.open(image_file.file)
+            image = Image.open(image.file)
             image = image.convert('RGB')
             image.save(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'))
 
@@ -170,7 +238,35 @@ async def save_generated_music(image_file: UploadFile,
         else:
             return JSONResponse(status_code=200, content={"music_id": str(music_id)})
 
-    return logic(locals())
+    return await logic(locals())
+
+
+# 생성 음악 저장하기 Ver 2
+@models_api.post("/music/save/v2", response_model=ResponseModels.MusicIdResponse)
+async def save_generated_music_v2(item: MusicSaveQuery):
+    @return_internal_server_error
+    async def logic(variables):
+        music_id = str_to_object_id(variables['item'].music_id)
+        music = MeloDB.melo_temp_music.find_one({"_id": music_id}, {'_id': False})
+        if not music:
+            raise HTTPException(status_code=404, detail="Music Not found")
+
+        item = variables['item'].model_dump(mode='json')
+        item['_id'] = music_id
+        item['caption'] = music['caption']
+        item['prompt'] = music['prompt']
+        item['genre'] = music['genre']
+        item['instrument'] = music['instrument']
+        item['mood'] = music['mood']
+        item['speed'] = music['speed']
+        item['generated_time'] = music['generated_time']
+        del item['music_id']
+        music_id = MeloDB.melo_music.insert_one(item).inserted_id
+        MeloDB.melo_temp_music.delete_one({"_id": music_id})
+
+        return JSONResponse(status_code=200, content={"music_id": item["music_id"]})
+
+    return await logic(locals())
 
 
 # 생성 음악 정보 가져오기
@@ -187,9 +283,8 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
     - music_id: 음악 id, string
     - genre: 장르, string
     - instrument: 악기, string, comma separated, ex) piano, guitar, drum
+    - mood: 무드, string
     - speed: 속도, string
-    - duration: 음악 길이, string
-    - emotion: 감정, string
     - title: 제목, string
     - desc: 설명, string
     - generated_time: 생성 시간, string
@@ -205,7 +300,7 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
     """
 
     @return_internal_server_error
-    def logic(variables):
+    async def logic(variables):
         if variables['user_id']:  # 특정 유저가 생성한 모든 음악 정보 가져오기
             user_id = str_to_object_id(variables['user_id'])
             user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
@@ -235,7 +330,7 @@ async def get_generated_music_info(user_id: str = None, music_id: str = None):
 
             return JSONResponse(status_code=200, content=music)
 
-    return logic(locals())
+    return await logic(locals())
 
 
 # 생성 음악 파일 가져오기
@@ -252,7 +347,7 @@ async def get_generated_music(music_id: str):
     """
 
     @return_internal_server_error
-    def logic(variables):
+    async def logic(variables):
         music_id = str_to_object_id(variables['music_id'])
         music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
         if not music:
@@ -260,7 +355,7 @@ async def get_generated_music(music_id: str):
 
         return FileResponse(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
 
-    return logic(locals())
+    return await logic(locals())
 
 
 # 생성 음악 썸네일 가져오기
@@ -277,18 +372,15 @@ async def get_generated_music_thumbnail(music_id: str):
     """
 
     @return_internal_server_error
-    def logic(variables):
+    async def logic(variables):
         music_id = str_to_object_id(variables['music_id'])
         music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
         if not music:
             raise HTTPException(status_code=404, detail="Music Not found")
 
-        # instrument 리스트를 string으로 변환
-        music['instrument'] = ','.join(music['instrument'])
-
         return FileResponse(os.path.join(music_thumbnails_path, f'{str(music_id)}.jpg'))
 
-    return logic(locals())
+    return await logic(locals())
 
 
 # 생성 음악 제거
@@ -305,11 +397,11 @@ async def delete_generated_music(music_id: str):
     """
 
     @return_internal_server_error
-    def logic(variables):
+    async def logic(variables):
         music_id = str_to_object_id(variables['music_id'])
         music = MeloDB.melo_music.find_one({"_id": music_id}, {'_id': False})
         if not music:
-            raise HTTPException(status_code=404, detail="Not found")
+            raise HTTPException(status_code=404, detail="Music Not found")
 
         MeloDB.melo_music.delete_one({"_id": music_id})
         os.remove(os.path.join(music_outputs_path, f'{str(music_id)}.wav'))
@@ -317,30 +409,4 @@ async def delete_generated_music(music_id: str):
 
         return JSONResponse(status_code=200, content={"music_id": str(music_id)})
 
-    return logic(locals())
-
-
-@models_api.get("/emotions")
-async def get_emotions(desc: str):
-    """
-    # 감정 분석하기
-
-    ## Parameters
-    - desc: 분석할 설명, string
-
-    ## Response
-    - 감정 분석 결과, json
-    """
-
-    @return_internal_server_error
-    def logic(variables):
-        params = dict({
-            "text": variables['desc']
-        })
-
-        response = requests.get('http://classify_emotions:56789/emotions', params=params)
-        emotions = response.json()
-
-        return JSONResponse(status_code=200, content=emotions)
-
-    return logic(locals())
+    return await logic(locals())

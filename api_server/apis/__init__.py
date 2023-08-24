@@ -17,12 +17,13 @@ class MeloDB:
         client = MongoClient(f'mongodb://{DB_ID}:{DB_PASSWORD}@mongo', 27017)
         self.melo_db = client['melovision']
         self.melo_users = self.melo_db['users']
-        self.melo_babies = self.melo_db['babies']
-        self.melo_diaries = self.melo_db['diaries']
-        self.melo_letters = self.melo_db['letters']
-        self.melo_chats = self.melo_db['chats']
-        self.melo_images = self.melo_db['images']
+        # self.melo_babies = self.melo_db['babies']
+        # self.melo_diaries = self.melo_db['diaries']
+        # self.melo_letters = self.melo_db['letters']
+        # self.melo_chats = self.melo_db['chats']
+        # self.melo_images = self.melo_db['images']
         self.melo_music = self.melo_db['music']
+        self.melo_temp_music = self.melo_db['temp_music']
 
 
 class ResponseModels:
@@ -39,9 +40,8 @@ class ResponseModels:
         music_id: str
         genre: str
         instrument: list[str]
+        mood: list[str]
         speed: str
-        duration: str
-        emotion: str
         title: str
         desc: str
         generated_time: str
@@ -50,28 +50,6 @@ class ResponseModels:
 class Sex(str, Enum):
     male = 'male'
     female = 'female'
-
-
-class Genre(str, Enum):
-    classic = 'classic'
-    jazz = 'jazz'
-    pop = 'pop'
-    rock = 'rock'
-    hiphop = 'hiphop'
-
-
-class Speed(str, Enum):
-    slow = 'slow'
-    medium = 'medium'
-    fast = 'fast'
-
-
-class Duration(str, Enum):
-    ten_seconds = '10'
-    thirty_seconds = '30'
-    one_minute = '60'
-    one_minute_thirty_seconds = '90'
-    two_minutes = '120'
 
 
 def object_id_to_str(documents):
