@@ -39,8 +39,8 @@ class ResponseModels:
     class MusicInfoResponse(BaseModel):
         music_id: str
         genre: str
-        instrument: list[str]
-        mood: list[str]
+        instrument: str
+        mood: str
         speed: str
         title: str
         desc: str

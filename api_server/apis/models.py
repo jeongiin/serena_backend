@@ -98,13 +98,14 @@ async def create_generated_music(item: MusicGenerateQuery):
 
 # 음악 생성하기 Ver 2
 @models_api.post("/music/v2", response_class=StreamingResponse)
-async def create_generated_music_v2(image: UploadFile, user_id: str = Form(...)):
+async def create_generated_music_v2(image: UploadFile, user_id: str = Form(...), emotion: str = Form(...)):
     """
     # 음악 생성하기 Ver 2
 
     ## Request Body
     - image: 썸네일 이미지 파일, image/jpg, image/jpeg, image/png, image/heic
     - user_id: 유저 id, string
+    - emotion: 현재 감정, string
 
     ## Response Headers
     - caption: 생성된 음악의 caption, string
@@ -131,6 +132,7 @@ async def create_generated_music_v2(image: UploadFile, user_id: str = Form(...))
         music_id = ObjectId()
         generated_time = get_generated_time(music_id)
         genre = user['genre']
+        emotion = variables['emotion']
 
         image_extension = image.filename.split('.')[-1].lower()
         if image_extension not in ['jpg', 'jpeg', 'png', 'heic']:
@@ -139,9 +141,9 @@ async def create_generated_music_v2(image: UploadFile, user_id: str = Form(...))
         response = requests.post('http://image_to_text:55555/caption', files={'image': image.file})
         caption = response.json()['caption']
 
-        response = requests.get('http://music_gen:44444/music', params={'caption': caption, 'genre': genre})
+        response = requests.get('http://music_gen:44444/music', params={'caption': caption, 'genre': genre, 'emotion': emotion})
         if response.status_code == 500:
-            raise HTTPException(status_code=500, detail="Out of Memory")
+            raise HTTPException(status_code=500, detail=response.content.decode("utf-8"))
 
         data_stream = io.BytesIO(response.content)
         with open(os.path.join(music_outputs_path, f'{str(music_id)}.wav'), 'wb') as f:
@@ -167,13 +169,13 @@ async def create_generated_music_v2(image: UploadFile, user_id: str = Form(...))
         music_id = MeloDB.melo_temp_music.insert_one(db_data).inserted_id
 
         response_headers = {
+            "music_id": str(music_id),
             "caption": caption,
             "prompt": response.headers['prompt'],
             "genre": response.headers['genre'],
             "instrument": response.headers['instrument'],
             "mood": response.headers['mood'],
             "speed": response.headers['speed'],
-            "music_id": str(music_id),
             "generated_time": generated_time,
         }
 
@@ -264,7 +266,7 @@ async def save_generated_music_v2(item: MusicSaveQuery):
         music_id = MeloDB.melo_music.insert_one(item).inserted_id
         MeloDB.melo_temp_music.delete_one({"_id": music_id})
 
-        return JSONResponse(status_code=200, content={"music_id": item["music_id"]})
+        return JSONResponse(status_code=200, content={"music_id": str(music_id)})
 
     return await logic(locals())
 
