@@ -24,7 +24,7 @@ async def root():
 
 
 @app.get("/music")
-async def generate_music(caption: str, genre: str, emotion: str):
+async def generate_music(caption: str, genre: str, emotion: str, duration: int = 10):
     for limit in range(5):
         print(f'limit: {limit}')
         try:
@@ -75,7 +75,7 @@ async def generate_music(caption: str, genre: str, emotion: str):
         raise HTTPException(status_code=500, detail="Exceed Limit")
 
     try:
-        model = load_model(duration=30, model_size='small')
+        model = load_model(duration=duration, model_size='small')
         output_music = genearate_music(music_prompt['prompt'], model)
         output_music = io.BytesIO(output_music)
 

@@ -184,6 +184,83 @@ async def create_generated_music_v2(image: UploadFile, user_id: str = Form(...),
     return await logic(locals())
 
 
+# 음악 생성하기 (FieldTest 용)
+@models_api.post("/music/fieldtest", response_class=StreamingResponse)
+async def create_generated_music_v2(image: UploadFile, user_id: str = Form(...), emotion: str = Form(...), duration: int = Form(...)):
+    """
+    # 음악 생성하기 (FieldTest 용)
+
+    ## Request Body
+    - image: 썸네일 이미지 파일, image/jpg, image/jpeg, image/png, image/heic
+    - user_id: 유저 id, string
+    - emotion: 현재 감정, string
+    - duration: 생성할 음악의 길이, int
+
+    ## Response Headers
+    - caption: 생성된 음악의 caption, string
+    - prompt: 생성된 음악의 prompt, string
+    - genre: 생성된 음악의 장르, string
+    - instrument: 생성된 음악의 악기, string, comma separated, ex) piano, guitar, drum
+    - mood: 생성된 음악의 무드, string
+    - speed: 생성된 음악의 속도, string
+    - music_id: 생성된 음악의 id, string
+    - generated_time: 생성된 음악의 생성 시간, string
+
+    ## Response Body
+    - 생성된 음악 파일, audio/x-wav
+
+    ## Comment
+    - FieldTest 용 엔드포인트
+    - DB에 저장하지 않음
+    - 음악파일 저장하지 않음
+    - 썸네일 저장하지 않음
+    """
+
+    @return_internal_server_error
+    async def logic(variables):
+        image = variables['image']
+        user_id = str_to_object_id(variables['user_id'])
+        user = MeloDB.melo_users.find_one({"_id": user_id}, {'_id': False})
+        if not user:
+            raise HTTPException(status_code=404, detail="User Not found")
+
+        music_id = ObjectId()
+        generated_time = get_generated_time(music_id)
+        genre = user['genre']
+        emotion = variables['emotion']
+
+        image_extension = image.filename.split('.')[-1].lower()
+        if image_extension not in ['jpg', 'jpeg', 'png', 'heic']:
+            raise HTTPException(status_code=415, detail="Unsupported Media Type (Invalid image file extension)")
+
+        response = requests.post('http://image_to_text:55555/caption', files={'image': image.file})
+        caption = response.json()['caption']
+
+        response = requests.get('http://music_gen:44444/music', params={'caption': caption, 'genre': genre, 'emotion': emotion, 'duration': duration})
+        if response.status_code == 500:
+            raise HTTPException(status_code=500, detail=response.content.decode("utf-8"))
+
+        data_stream = io.BytesIO(response.content)
+
+        response_headers = {
+            "music_id": str(music_id),
+            "caption": caption,
+            "prompt": response.headers['prompt'],
+            "genre": response.headers['genre'],
+            "instrument": response.headers['instrument'],
+            "mood": response.headers['mood'],
+            "speed": response.headers['speed'],
+            "generated_time": generated_time,
+        }
+
+        return StreamingResponse(data_stream, media_type="audio/x-wav", headers=response_headers)
+
+    return await logic(locals())
+
+
+# # TODO: 필드 테스트용 엔드포인트 삭제
+
+
 # 생성 음악 저장하기
 @models_api.post("/music/save", response_model=ResponseModels.MusicIdResponse, deprecated=True)
 async def save_generated_music(image: UploadFile,
