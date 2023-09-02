@@ -1,5 +1,5 @@
 import io
-import time
+import os
 import warnings
 
 from audiocraft.models import musicgen
@@ -7,13 +7,6 @@ from scipy.io.wavfile import write
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=UserWarning)
-
-
-def generate_prompt(options: dict):
-    prompt = 'a ' + options['genre'] + ' track with ' + ' and '.join(options['instrument']) + ' at ' + options['speed'] + ' bpm ' + options['emotion']
-    print(prompt)
-    return prompt
-
 
 def load_model(model_size='small', duration=30):
     model = musicgen.MusicGen.get_pretrained(model_size, device='cuda')
@@ -34,13 +27,12 @@ def genearate_music(prompt, model, sampling_rate=32000):
 
 
 if __name__ == "__main__":
-    model = load_model()
-    # An 80s driving pop song with heavy drums and synth pads in the background
-    options = {'genre': '80s driving pop', 'instrument': ['heavy drums'],
-               'speed': 'slow', 'mood': 'calm'}
-    prompt = generate_prompt(options)
-    file_name = prompt.replace(' ', '_') + '.wav'
+    model = load_model(duration=10, model_size='small')
+
+    output_music = genearate_music('A dreamy pop track with gentle piano melodies, emotional violin harmonies, and ethereal synthesizer textures, capturing the serene atmosphere as a rainbow appears over a city street.', model)
+    output_music = io.BytesIO(output_music)
+
+    file_name = f'test.wav'
     print(file_name)
-    start = time.time()
-    genearate_music(prompt, model, save_path=file_name)
-    print('spending time :', time.time() - start)
+    with open(os.path.join('./', file_name), 'wb') as f:
+        f.write(output_music.read())

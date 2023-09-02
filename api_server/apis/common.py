@@ -4,7 +4,7 @@ from fastapi import HTTPException, APIRouter
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from . import MeloDB, object_id_to_str, str_to_object_id, return_internal_server_error, Sex
+from . import MeloDB, ResponseModels, object_id_to_str, str_to_object_id, return_internal_server_error, Sex
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -18,7 +18,7 @@ class User(BaseModel):
     phone: str
     address: str
     desc: str = None
-    expected_pd: int = None
+    genre: str
 
 
 class Baby(BaseModel):
@@ -31,8 +31,23 @@ class Baby(BaseModel):
 
 
 # 새 회원 정보 작성
-@common_api.post("/users")
+@common_api.post("/users", response_model=ResponseModels.UserIdResponse)
 async def create_user(item: User):
+    """
+    # 새 회원 정보 작성
+
+    ## Request Body
+    - name: 이름, string
+    - email: 이메일, string
+    - phone: 전화번호, string
+    - address: 주소, string
+    - desc: 기타 정보, string
+    - genre: 선호하는 장르, string
+
+    ## Response
+    - user_id: 생성된 회원의 id, string
+    """
+
     @return_internal_server_error
     def logic(variables):
         user_id = MeloDB.melo_users.insert_one(variables['item'].model_dump()).inserted_id
@@ -43,16 +58,29 @@ async def create_user(item: User):
 
 
 # 회원 정보 조회
-@common_api.get("/users")
+@common_api.get("/users", response_model=User)
 async def get_user(user_id: str):
+    """
+    # 회원 정보 조회
+
+    ## Parameters
+    - user_id: 조회할 회원의 ObjectId, string
+
+    ## Response
+    - name: 이름, string
+    - email: 이메일, string
+    - phone: 전화번호, string
+    - address: 주소, string
+    - desc: 기타 정보, string
+    - genre: 선호하는 장르, string
+    """
+
     @return_internal_server_error
     def logic(variables):
         user_id = str_to_object_id(variables['user_id'])
-        user = MeloDB.melo_users.find_one({"_id": user_id})
+        user = MeloDB.melo_users.find_one({"_id": user_id}, {"_id": False})
         if not user:
             raise HTTPException(status_code=404, detail="Not found")
-
-        user['_id'] = str(user['_id'])
 
         return JSONResponse(status_code=200, content=user)
 
@@ -60,8 +88,26 @@ async def get_user(user_id: str):
 
 
 # 회원 정보 수정
-@common_api.put("/users")
+@common_api.put("/users", response_model=ResponseModels.UserIdResponse)
 async def update_user(user_id: str, item: User):
+    """
+    # 회원 정보 수정
+
+    ## Parameters
+    - user_id: 수정할 회원의 ObjectId, string
+
+    ## Request Body
+    - name: 이름, string
+    - email: 이메일, string
+    - phone: 전화번호, string
+    - address: 주소, string
+    - desc: 기타 정보, string
+    - genre: 선호하는 장르, string
+
+    ## Response
+    - user_id: 수정된 회원의 id, string
+    """
+
     @return_internal_server_error
     def logic(variables):
         user_id = str_to_object_id(variables['user_id'])
@@ -77,8 +123,18 @@ async def update_user(user_id: str, item: User):
 
 
 # 회원 정보 삭제
-@common_api.delete("/users")
+@common_api.delete("/users", response_model=ResponseModels.UserIdResponse)
 async def delete_user(user_id: str):
+    """
+    # 회원 정보 삭제
+
+    ## Parameters
+    - user_id: 삭제할 회원의 ObjectId, string
+
+    ## Response
+    - user_id: 삭제된 회원의 id, string
+    """
+
     @return_internal_server_error
     def logic(variables):
         user_id = str_to_object_id(variables['user_id'])
@@ -94,7 +150,7 @@ async def delete_user(user_id: str):
 
 
 # 새 아기 정보 작성
-@common_api.post("/babies")
+@common_api.post("/babies", response_model=ResponseModels.BabyIdResponse, deprecated=True)
 async def create_baby(item: Baby):
     @return_internal_server_error
     def logic(variables):
@@ -113,7 +169,7 @@ async def create_baby(item: Baby):
 
 
 # 전체, 개별 아기 정보 조회
-@common_api.get("/babies")
+@common_api.get("/babies", response_model=Baby, deprecated=True)
 async def get_babies(user_id: str, baby_id: str = None):
     @return_internal_server_error
     def logic(variables):
@@ -136,7 +192,7 @@ async def get_babies(user_id: str, baby_id: str = None):
 
 
 # 아기 정보 수정
-@common_api.put("/babies")
+@common_api.put("/babies", response_model=ResponseModels.BabyIdResponse, deprecated=True)
 async def update_baby(baby_id: str, item: Baby):
     @return_internal_server_error
     def logic(variables):
@@ -154,7 +210,7 @@ async def update_baby(baby_id: str, item: Baby):
 
 
 # 아기 정보 삭제
-@common_api.delete("/babies")
+@common_api.delete("/babies", response_model=ResponseModels.BabyIdResponse, deprecated=True)
 async def delete_baby(user_id: str, baby_id: str):
     @return_internal_server_error
     def logic(variables):
